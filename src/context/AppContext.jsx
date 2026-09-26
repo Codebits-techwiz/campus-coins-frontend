@@ -62,7 +62,6 @@ export function AppProvider({ children }) {
           setAuthLoading(false);
         }
       }
-      }
     };
 
     checkSession();

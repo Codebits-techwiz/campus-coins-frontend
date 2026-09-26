@@ -612,7 +612,6 @@ export default function Transactions() {
       )}
 
       {/* Quick-Add Modal */}
->>>>>>> b014552 (dashboard-updated)
       {showForm && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 animate-fade-in">
           <div className="bg-white rounded-2xl shadow-2xl p-6 relative w-full max-w-xl max-h-[90vh] overflow-y-auto">
@@ -771,11 +770,7 @@ export default function Transactions() {
           </div>
         </div>
       )}
-          </div>
-        </div>
-      )}
 
-      
     </>
   );
 }

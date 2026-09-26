@@ -139,6 +139,12 @@ export default function Register() {
           </div>
         )}
         <form onSubmit={handleSubmit} className="space-y-3.5" noValidate>
+          <div>
+            <label className="text-xs font-semibold text-cc-muted uppercase tracking-wide">
+              {t('auth.name')}
+            </label>
+            <div className="mt-1 relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cc-muted" />
               <input
                 type="text"
                 value={form.name}

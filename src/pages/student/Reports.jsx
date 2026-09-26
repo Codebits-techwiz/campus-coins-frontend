@@ -48,7 +48,6 @@ export default function Reports() {
         if (trendRes.data.success && Array.isArray(trendRes.data.data)) {
           setTrend6Months(trendRes.data.data.map(d => ({ month: d.month || d._id, income: d.income, expense: d.expense })));
         }
-        }
         if (dwRes.data.success && dwRes.data.data) {
           // Backend returns { daily: [], weekly: [] }
           const dailyExpenses = dwRes.data.data.daily?.filter(d => d.type === 'expense').map(d => d.total) || [];
