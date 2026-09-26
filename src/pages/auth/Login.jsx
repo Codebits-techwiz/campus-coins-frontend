@@ -39,6 +39,7 @@ export default function Login() {
     }
   };
 
+  console.log("Login render");
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12 bg-gradient-to-br from-cc-mint-soft to-cc-cream animate-fade-in">
       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-gray-100 p-8">

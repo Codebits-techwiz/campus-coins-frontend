@@ -21,13 +21,16 @@ import Transactions from './pages/student/Transactions';
 import Categories from './pages/student/Categories';
 import Budgets from './pages/student/Budgets';
 import Reports from './pages/student/Reports';
+import Recurring from './pages/student/Recurring';
 import Insights from './pages/student/Insights';
 import Profile from './pages/student/Profile';
 import Bookmarks from './pages/student/Bookmarks';
+import ResetPassword from './pages/auth/ResetPassword';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminCategories from './pages/admin/AdminCategories';
 import AdminAnnouncements from './pages/admin/AdminAnnouncements';
+import AdminTipTemplates from './pages/admin/AdminTipTemplates';
 import AdminStats from './pages/admin/AdminStats';
 import { PageLoader, RouteLoader } from './components/PageLoader';
 
@@ -81,6 +84,7 @@ function AppRoutes() {
             element={<RedirectIfLoggedIn to={<Register />} />}
           />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route
             path="/admin-login"
             element={<RedirectIfLoggedIn to={<AdminLogin />} />}
@@ -94,6 +98,7 @@ function AppRoutes() {
           <Route path="categories" element={<Categories />} />
           <Route path="budgets" element={<Budgets />} />
           <Route path="reports" element={<Reports />} />
+          <Route path="recurring" element={<Recurring />} />
           <Route path="insights" element={<Insights />} />
           <Route path="bookmarks" element={<Bookmarks />} />
           <Route path="profile" element={<Profile />} />
@@ -105,6 +110,7 @@ function AppRoutes() {
           <Route path="users" element={<AdminUsers />} />
           <Route path="categories" element={<AdminCategories />} />
           <Route path="announcements" element={<AdminAnnouncements />} />
+          <Route path="tip-templates" element={<AdminTipTemplates />} />
           <Route path="stats" element={<AdminStats />} />
         </Route>
 
@@ -115,6 +121,7 @@ function AppRoutes() {
 }
 
 export default function App() {
+  console.log("App render");
   return (
     <AppProvider>
       <AppRoutes />

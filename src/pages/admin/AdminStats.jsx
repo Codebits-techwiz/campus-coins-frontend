@@ -1,27 +1,38 @@
+import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { useApp } from '../../context/AppContext';
+import api from '../../api';
 
 const COLORS = ['#5CB85C', '#0B3D2E', '#F5C518', '#3D9B3D', '#95cea4', '#145A43'];
 
-const weeklyActive = [
-  { week: 'W1', users: 42 },
-  { week: 'W2', users: 58 },
-  { week: 'W3', users: 71 },
-  { week: 'W4', users: 65 },
-];
-
 export default function AdminStats() {
-  const { users, transactions, categories } = useApp();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const catUsage = {};
-  transactions
-    .filter((t) => t.type === 'expense')
-    .forEach((t) => {
-      catUsage[t.category] = (catUsage[t.category] || 0) + 1;
-    });
-  const pieData = Object.entries(catUsage).map(([name, value]) => ({ name, value }));
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await api.get('/api/admin/stats');
+        if (res.data.success) setStats(res.data.data);
+      } catch (err) {
+        console.error('Failed to load admin stats', err);
+      }
+      setLoading(false);
+    };
+    fetchStats();
+  }, []);
 
-  const totalTx = users.reduce((s, u) => s + u.transactions, 0);
+  if (loading) return <div className="text-center py-10 text-cc-muted">Loading stats...</div>;
+  if (!stats) return <div className="text-center py-10 text-red-500">Failed to load stats.</div>;
+
+  const pieData = stats.topCategories?.map(c => ({ name: c.name, value: c.count })) || [];
+  
+  // Dummy data for weekly active users since it's not provided by the backend API currently
+  const weeklyActive = [
+    { week: 'W1', users: Math.floor(stats.activeUsers * 0.8) },
+    { week: 'W2', users: Math.floor(stats.activeUsers * 0.9) },
+    { week: 'W3', users: Math.floor(stats.activeUsers * 1.1) },
+    { week: 'W4', users: stats.activeUsers },
+  ];
 
   return (
     <div className="animate-fade-in space-y-6 max-w-5xl">
@@ -32,17 +43,17 @@ export default function AdminStats() {
 
       <div className="grid sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-2xl border p-5 shadow-sm">
-          <p className="text-xs font-bold text-cc-muted uppercase">Registered Users</p>
-          <p className="text-3xl font-extrabold text-cc-forest mt-1">{users.length}</p>
+          <p className="text-xs font-bold text-cc-muted uppercase">Active Users</p>
+          <p className="text-3xl font-extrabold text-cc-forest mt-1">{stats.activeUsers}</p>
         </div>
         <div className="bg-white rounded-2xl border p-5 shadow-sm">
           <p className="text-xs font-bold text-cc-muted uppercase">Transactions Logged</p>
-          <p className="text-3xl font-extrabold text-cc-lime mt-1">{totalTx}</p>
+          <p className="text-3xl font-extrabold text-cc-lime mt-1">{stats.totalTransactions}</p>
         </div>
         <div className="bg-white rounded-2xl border p-5 shadow-sm">
-          <p className="text-xs font-bold text-cc-muted uppercase">Default Categories</p>
+          <p className="text-xs font-bold text-cc-muted uppercase">Total Volume Logged</p>
           <p className="text-3xl font-extrabold text-cc-forest mt-1">
-            {categories.filter((c) => c.isDefault).length}
+            ${(stats.totalVolume?.expense || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
           </p>
         </div>
       </div>

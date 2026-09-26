@@ -3,6 +3,7 @@ import { Target, Bell, Plus, Trash2, CheckCheck } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../../components/Button';
 import { formatPkr } from '../../utils/currency';
+import { CategoryIcon } from '../../utils/categoryIcons';
 
 export default function Budgets() {
   const {
@@ -15,6 +16,7 @@ export default function Budgets() {
     unreadCount,
     markNotificationRead,
     showToast,
+    profile,
   } = useApp();
 
   const [categoryId, setCategoryId] = useState('');
@@ -114,7 +116,7 @@ export default function Budgets() {
             <option value="">Select...</option>
             {expenseCats.map((c) => (
               <option key={c._id || c.id} value={c._id || c.id}>
-                {c.icon} {c.name}
+                {c.name}
               </option>
             ))}
           </select>
@@ -157,8 +159,9 @@ export default function Budgets() {
               <div key={getId(b)} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                   <div>
-                    <h3 className="font-bold text-cc-forest">
-                      {catIcon} {catName}
+                    <h3 className="font-bold text-cc-forest flex items-center gap-2">
+                      <CategoryIcon iconKey={b.category?.icon} color={b.category?.color} className="w-4 h-4" />
+                      {catName}
                     </h3>
                     <p className="text-xs text-cc-muted">{monthLabel}</p>
                   </div>

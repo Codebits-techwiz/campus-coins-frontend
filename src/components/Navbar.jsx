@@ -146,7 +146,7 @@ export function Navbar() {
       </div>
 
       {open && (
-        <div className="lg:hidden bg-white border-b border-gray-100 px-6 py-4 space-y-1 animate-fade-in">
+        <div className="lg:hidden bg-white border-b border-gray-100 px-6 py-4 space-y-3 animate-fade-in">
           {navLinkDefs.map((l) => (
             <Link
               key={l.to}

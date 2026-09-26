@@ -20,9 +20,9 @@ export default function AdminDashboard() {
         <p className="text-sm text-cc-muted">Platform oversight for users, categories, announcements, and usage</p>
       </div>
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {cards.map((c) => (
+        {cards.map((c, index) => (
           <Link
-            key={c.label}
+            key={index}
             to={c.to}
             className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition"
           >

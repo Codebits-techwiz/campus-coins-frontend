@@ -83,10 +83,12 @@ export default function Bookmarks() {
           {bookmarks.map((b) => {
             const isTip = b.refType === 'tip';
             const title = isTip ? 'Saving Tip' : 'Monthly Insight';
+            const item = b.ref || (isTip ? b.tip : b.insight);
 
-            let contentText = 'Content unavailable';
-            if (isTip && b.tip) contentText = b.tip.text;
-            if (!isTip && b.insight) contentText = b.insight.text;
+            let contentText = isTip ? 'This tip is no longer available' : 'This insight is no longer available';
+            if (item) {
+              contentText = item.summaryText || item.text || contentText;
+            }
 
             return (
               <div key={b._id} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col">

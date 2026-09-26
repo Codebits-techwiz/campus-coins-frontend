@@ -9,6 +9,7 @@ import {
   AlertTriangle,
   ArrowRight,
   Lightbulb,
+  X
 } from 'lucide-react';
 import {
   PieChart,
@@ -22,8 +23,9 @@ import {
   Tooltip,
 } from 'recharts';
 import { useApp } from '../../context/AppContext';
+import { formatMoney } from '../../utils/formatMoney';
 import { Button } from '../../components/Button';
-import { sixMonthTrend } from '../../data/mockData';
+import { CategoryIcon } from '../../utils/categoryIcons';
 import api from '../../api';
 import { useState, useEffect } from 'react';
 
@@ -39,17 +41,25 @@ const getCatName = (t) => {
 };
 
 export default function Dashboard() {
-  const { profile, balance, monthIncome, monthExpense, transactions, tips, budgets, monthSpent, announcements, dashboardSummary, notifications, unreadCount } =
-    useApp();
+  const { profile, balance, monthIncome, monthExpense, transactions, announcements, dashboardSummary, showToast } = useApp();
 
-
-  const income  = dashboardSummary?.currentMonth?.income  ?? monthIncome;
-  const expense = dashboardSummary?.currentMonth?.expenses ?? monthExpense;
-  const bal     = dashboardSummary?.currentMonth?.balance  ?? balance;
+  const income  = dashboardSummary?.currentMonth?.income  ?? dashboardSummary?.totals?.income ?? monthIncome;
+  const expense = dashboardSummary?.currentMonth?.expenses ?? dashboardSummary?.totals?.expense ?? monthExpense;
+  const bal     = dashboardSummary?.currentMonth?.balance  ?? dashboardSummary?.totals?.balance ?? balance;
 
   const recentTx = dashboardSummary?.recentTransactions ?? transactions.slice(0, 5);
 
   const [activities, setActivities] = useState([]);
+  const [trend6Months, setTrend6Months] = useState([]);
+  
+  // Local state for tips to allow optimistic UI updates
+  const [localTips, setLocalTips] = useState([]);
+
+  useEffect(() => {
+    if (dashboardSummary?.topTips) {
+      setLocalTips(dashboardSummary.topTips);
+    }
+  }, [dashboardSummary?.topTips]);
 
   useEffect(() => {
     api.get('/api/activity/recent')
@@ -59,8 +69,16 @@ export default function Dashboard() {
         }
       })
       .catch(console.error);
-  }, []);
 
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    api.get(`/api/reports/trend-6months?month=${currentMonth}`)
+      .then(res => {
+        if (res.data.success) {
+          setTrend6Months((res.data.data || []).map(d => ({ month: d.month || d._id, income: d.income, expense: d.expense })));
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   const currentMonth = new Date().toISOString().slice(0, 7);
   const expenseByCat = {};
@@ -71,22 +89,40 @@ export default function Dashboard() {
       expenseByCat[name] = (expenseByCat[name] || 0) + (t.amount || 0);
     });
   const pieData = Object.entries(expenseByCat).map(([name, value]) => ({ name, value }));
-  const topCategory = [...pieData].sort((a, b) => b.value - a.value)[0];
+  const topCategory = dashboardSummary?.topCategory || [...pieData].sort((a, b) => b.value - a.value)[0];
 
-  const activeTips = (tips || []).filter((t) => !t.dismissed).slice(0, 3);
-  const alerts = (budgets || []).filter((b) => {
-    const spent = monthSpent(b.categoryId);
-    return b.limit > 0 && spent / b.limit >= 0.8;
-  });
+  const budgets = dashboardSummary?.budgetVsActual || [];
+  const alerts = budgets.filter((b) => b.limitAmount > 0 && (b.currentSpent || 0) / b.limitAmount >= 0.8);
 
-  const firstName = profile?.name?.split(' ')[0] || 'Student';
+  const greeting = dashboardSummary?.greeting || `Good day, ${profile?.name?.split(' ')[0] || 'Student'}`;
+
+  const handleToggleTipPin = async (tipId) => {
+    setLocalTips(localTips.map(t => (t._id || t.id) === tipId ? { ...t, isPinned: !t.isPinned, pinned: !t.pinned } : t));
+    try {
+      await api.post(`/api/ai/saving-tips/${tipId}/pin`);
+    } catch (err) {
+      showToast('Failed to pin tip', 'error');
+      setLocalTips(localTips.map(t => (t._id || t.id) === tipId ? { ...t, isPinned: !t.isPinned, pinned: !t.pinned } : t));
+    }
+  };
+
+  const handleDismissTip = async (tipId) => {
+    const previous = [...localTips];
+    setLocalTips(localTips.filter(t => (t._id || t.id) !== tipId));
+    try {
+      await api.post(`/api/ai/saving-tips/${tipId}/dismiss`);
+    } catch (err) {
+      showToast('Failed to dismiss tip', 'error');
+      setLocalTips(previous);
+    }
+  };
 
   return (
     <div className="animate-fade-in space-y-6 max-w-6xl">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-cc-forest">
-            Good day, {firstName}
+            {greeting}
           </h1>
           <p className="text-cc-muted text-sm mt-1">Here&apos;s your {new Date().toLocaleString('default', { month: 'long' })} money snapshot</p>
         </div>
@@ -137,7 +173,7 @@ export default function Dashboard() {
           <h2 className="font-bold text-cc-forest mb-4">Income vs Expense (6 months)</h2>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={sixMonthTrend}>
+              <BarChart data={trend6Months}>
                 <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip formatter={(value) => formatPkr(value)} />
@@ -151,7 +187,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
           <h2 className="font-bold text-cc-forest mb-1">This Month&apos;s Top Category</h2>
           <p className="text-sm text-cc-muted mb-3">
-            {topCategory ? `${topCategory.name} - ${formatPkr(topCategory.value)}` : 'No expenses yet'}
+            {topCategory ? `${topCategory.name} - ${formatPkr(topCategory.amount || topCategory.value || 0)}` : 'No expenses yet'}
           </p>
           <div className="h-44">
             {pieData.length > 0 ? (
@@ -186,18 +222,40 @@ export default function Dashboard() {
             </Link>
           </div>
           <div className="space-y-3">
-            {activeTips.length === 0 ? (
+            {localTips.length === 0 ? (
               <p className="text-sm text-cc-muted text-center py-4">No tips available yet.</p>
             ) : (
-              activeTips.map((tip) => (
-                <div key={tip._id || tip.id} className="flex gap-3 p-3 rounded-xl bg-cc-mint-soft border border-cc-mint">
-                  {tip.pinned && <Pin className="w-4 h-4 text-cc-lime shrink-0 mt-0.5" />}
-                  <div>
-                    <span className="text-[10px] font-bold uppercase text-cc-lime">{tip.impact} impact</span>
-                    <p className="text-sm text-cc-ink mt-0.5">{tip.text}</p>
+              localTips.map((tip) => {
+                const isPinned = tip.isPinned || tip.pinned;
+                const tipId = tip._id || tip.id;
+                return (
+                  <div key={tipId} className="flex gap-3 p-3 rounded-xl bg-cc-mint-soft border border-cc-mint items-start">
+                    <div className="flex-1">
+                      <span className="text-[10px] font-bold uppercase text-cc-lime">{tip.impact} impact</span>
+                      <p className="text-sm text-cc-ink mt-0.5">{tip.text}</p>
+                      <p className="text-[10px] text-cc-muted italic mt-1 leading-tight">Notice: Advisory suggestion, not certified advice.</p>
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleTipPin(tipId)}
+                        className={`p-1.5 rounded-lg ${isPinned ? 'bg-cc-mint text-cc-lime' : 'text-cc-muted hover:bg-gray-50'}`}
+                        title={isPinned ? 'Unpin' : 'Pin tip'}
+                      >
+                        <Pin className={`w-3.5 h-3.5 ${isPinned ? 'fill-current' : ''}`} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDismissTip(tipId)}
+                        className="p-1.5 rounded-lg text-cc-muted hover:bg-red-50 hover:text-red-500"
+                        title="Dismiss"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
@@ -220,15 +278,19 @@ export default function Dashboard() {
               <p className="text-sm text-cc-muted text-center py-4">No budgets set yet.</p>
             ) : (
               (budgets || []).map((b) => {
-                const spent = monthSpent(b.categoryId);
-                const pct = Math.min(100, Math.round(((spent || 0) / (b.limit || 1)) * 100));
-                const over = spent >= b.limit;
+                const spent = b.currentSpent || 0;
+                const limit = b.limitAmount || 1;
+                const pct = Math.min(100, Math.round((spent / limit) * 100));
+                const over = spent >= limit;
                 return (
                   <div key={b._id || b.id}>
                     <div className="flex justify-between text-xs mb-1">
-                      <span className="font-semibold text-cc-ink">{b.category}</span>
+                      <span className="font-semibold text-cc-ink flex items-center gap-1.5">
+                        <CategoryIcon iconKey={b.category?.icon} color={b.category?.color} className="w-3 h-3" />
+                        {b.category?.name}
+                      </span>
                       <span className={over ? 'text-red-600 font-bold' : 'text-cc-muted'}>
-                        {formatPkr(spent)} / {formatPkr(b.limit)}
+                        {formatPkr(spent)} / {formatPkr(limit)}
                       </span>
                     </div>
                     <div className="h-2 rounded-full bg-gray-100 overflow-hidden">

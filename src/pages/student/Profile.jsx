@@ -2,20 +2,36 @@ import { useState, useRef } from 'react';
 import { Upload, Save, Moon, Sun, Type } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../../components/Button';
+import api from '../../api';
 
 export default function Profile() {
   const { profile, setProfile, importCsv, showToast, darkMode, setDarkMode, fontSize, setFontSize } = useApp();
-  const [form, setForm] = useState({ ...profile });
+  const [form, setForm] = useState({ 
+    ...profile,
+    monthlyAllowanceBaseline: profile?.monthlyAllowanceBaseline || 0,
+    monthlySavingsGoal: profile?.monthlySavingsGoal || 0,
+    currency: profile?.currency || 'PKR'
+  });
   const fileRef = useRef(null);
 
-  const save = (e) => {
+  const save = async (e) => {
     e.preventDefault();
-    setProfile({
-      ...form,
-      monthlyAllowance: Number(form.monthlyAllowance),
-      savingsGoal: Number(form.savingsGoal),
-    });
-    showToast('Profile updated', 'success');
+    try {
+      const payload = {
+        name: form.name,
+        academicYear: form.academicYear,
+        monthlyAllowanceBaseline: Number(form.monthlyAllowanceBaseline),
+        monthlySavingsGoal: Number(form.monthlySavingsGoal),
+        currency: form.currency
+      };
+      const res = await api.put('/api/users/profile', payload);
+      if (res.data.success) {
+        setProfile(res.data.data);
+        showToast('Profile updated', 'success');
+      }
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to update profile', 'error');
+    }
   };
 
   const onFile = (e) => {
@@ -27,7 +43,7 @@ export default function Profile() {
   };
 
   return (
-    <div className="animate-fade-in space-y-8 max-w-2xl">
+    <div className="animate-fade-in space-y-8 max-w-4xl mx-auto">
       <div>
         <h1 className="text-2xl font-extrabold text-cc-forest">Profile & Settings</h1>
         <p className="text-sm text-cc-muted">Academic year, allowance baseline, savings goal, accessibility</p>
@@ -63,23 +79,36 @@ export default function Profile() {
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-xs font-semibold text-cc-muted uppercase">Monthly allowance (PKR)</label>
+            <label className="text-xs font-semibold text-cc-muted uppercase">Monthly allowance ({form.currency})</label>
             <input
               type="number"
-              value={form.monthlyAllowance}
-              onChange={(e) => setForm({ ...form, monthlyAllowance: e.target.value })}
+              value={form.monthlyAllowanceBaseline}
+              onChange={(e) => setForm({ ...form, monthlyAllowanceBaseline: e.target.value })}
               className="mt-1 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm"
             />
           </div>
           <div>
-            <label className="text-xs font-semibold text-cc-muted uppercase">Savings goal (PKR)</label>
+            <label className="text-xs font-semibold text-cc-muted uppercase">Savings goal ({form.currency})</label>
             <input
               type="number"
-              value={form.savingsGoal}
-              onChange={(e) => setForm({ ...form, savingsGoal: e.target.value })}
+              value={form.monthlySavingsGoal}
+              onChange={(e) => setForm({ ...form, monthlySavingsGoal: e.target.value })}
               className="mt-1 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm"
             />
           </div>
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-cc-muted uppercase">Currency</label>
+          <select
+            value={form.currency}
+            onChange={(e) => setForm({ ...form, currency: e.target.value })}
+            className="mt-1 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm"
+          >
+            <option value="PKR">PKR - Pakistani Rupee</option>
+            <option value="USD">USD - US Dollar</option>
+            <option value="EUR">EUR - Euro</option>
+            <option value="GBP">GBP - British Pound</option>
+          </select>
         </div>
         <Button type="submit" className="!rounded-xl">
           <Save className="w-4 h-4" /> Save Profile

@@ -54,6 +54,7 @@ export default function Register() {
     academicYear: 'Year 1',
     monthlyAllowance: '40000',
     savingsGoal: '10000',
+    currency: 'PKR',
   });
 
   const passwordChecks = getPasswordChecks(form.password);
@@ -96,6 +97,7 @@ export default function Register() {
         academicYear: form.academicYear,
         monthlyAllowance: Number(form.monthlyAllowance),
         savingsGoal: Number(form.savingsGoal),
+        currency: form.currency,
       };
 
       const res = await api.post('/api/auth/register', payload);
@@ -137,12 +139,6 @@ export default function Register() {
           </div>
         )}
         <form onSubmit={handleSubmit} className="space-y-3.5" noValidate>
-          <div>
-            <label className="text-xs font-semibold text-cc-muted uppercase tracking-wide">
-              {t('auth.name')}
-            </label>
-            <div className="mt-1 relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cc-muted" />
               <input
                 type="text"
                 value={form.name}

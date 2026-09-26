@@ -21,6 +21,7 @@ const links = [
   { to: '/admin/users', label: 'Users', icon: Users },
   { to: '/admin/categories', label: 'Categories', icon: Tags },
   { to: '/admin/announcements', label: 'Announcements', icon: Megaphone },
+  { to: '/admin/tip-templates', label: 'Tip Templates', icon: Shield },
   { to: '/admin/stats', label: 'Usage Stats', icon: BarChart3 },
 ];
 
@@ -59,10 +60,9 @@ export function AdminLayout() {
     ));
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <div className="flex flex-1">
-        <aside className="hidden lg:flex w-64 flex-col bg-cc-ink text-white shrink-0">
-          <div className="p-5 border-b border-white/10">
+    <div className="h-screen overflow-hidden flex bg-gray-50">
+      <aside className="hidden lg:flex w-64 flex-col bg-cc-ink text-white shrink-0 h-full">
+        <div className="p-5 border-b border-white/10">
             <Link to="/">
               <Logo dark />
             </Link>
@@ -93,11 +93,10 @@ export function AdminLayout() {
               <NavItems />
             </div>
           )}
-          <main className="flex-1 p-4 sm:p-6 lg:p-8">
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
             <Outlet />
           </main>
         </div>
-      </div>
       <Toast />
     </div>
   );

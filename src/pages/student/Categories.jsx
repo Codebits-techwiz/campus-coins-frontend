@@ -1,14 +1,29 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Plus, Pencil, Trash2, X } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../../components/Button';
+import { iconMap, PRESET_COLORS, CategoryIcon } from '../../utils/categoryIcons';
 
 export default function Categories() {
   const { categories, addCategory, updateCategory, deleteCategory } = useApp();
   const [show, setShow] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [form, setForm] = useState({ name: '', type: 'expense', icon: '📁', color: '#6B7280' });
+  const [form, setForm] = useState({ name: '', type: 'expense', icon: 'tag', color: '#6B7280' });
   const [loading, setLoading] = useState(false);
+  
+  const [showIconPicker, setShowIconPicker] = useState(false);
+  const iconPickerRef = useRef(null);
+
+  // Close popover when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (iconPickerRef.current && !iconPickerRef.current.contains(event.target)) {
+        setShowIconPicker(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
 
   const getId = (c) => c._id || c.id;
@@ -18,13 +33,13 @@ export default function Categories() {
 
   const openAdd = () => {
     setEditId(null);
-    setForm({ name: '', type: 'expense', icon: '📁', color: '#6B7280' });
+    setForm({ name: '', type: 'expense', icon: 'tag', color: '#6B7280' });
     setShow(true);
   };
 
   const openEdit = (c) => {
     setEditId(getId(c));
-    setForm({ name: c.name, type: c.type, icon: c.icon || '📁', color: c.color || '#6B7280' });
+    setForm({ name: c.name, type: c.type, icon: c.icon || 'tag', color: c.color || '#6B7280' });
     setShow(true);
   };
 
@@ -42,12 +57,7 @@ export default function Categories() {
       {items.map((c) => (
         <div key={getId(c)} className="bg-white border border-gray-100 rounded-xl p-4 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-3">
-            <span
-              className="w-9 h-9 rounded-lg flex items-center justify-center text-lg"
-              style={{ backgroundColor: c.color ? `${c.color}20` : '#f0fdf4' }}
-            >
-              {c.icon || '📁'}
-            </span>
+            <CategoryIcon iconKey={c.icon} color={c.color} className="w-5 h-5" />
             <div>
               <p className="font-semibold text-cc-forest">{c.name}</p>
               <p className="text-xs text-cc-muted capitalize">{c.type} / {c.isDefault ? 'Default' : 'Personal'}</p>
@@ -94,25 +104,55 @@ export default function Categories() {
               className="mt-1 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-cc-lime"
             />
           </div>
-          <div className="w-36">
+          <div className="relative" ref={iconPickerRef}>
             <label className="text-xs font-semibold text-cc-muted uppercase">Icon</label>
-            <input
-              value={form.icon}
-              onChange={(e) => setForm({ ...form, icon: e.target.value })}
-              className="mt-1 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-cc-lime"
-              placeholder="🍕"
-            />
+            <div className="mt-1">
+              <button
+                type="button"
+                onClick={() => setShowIconPicker(!showIconPicker)}
+                className="w-full flex items-center justify-center h-[42px] px-3 rounded-xl border border-gray-200 hover:border-cc-lime transition"
+              >
+                <CategoryIcon iconKey={form.icon} color={form.color} />
+              </button>
+            </div>
+            {showIconPicker && (
+              <div className="absolute top-full left-0 mt-2 p-3 bg-white border border-gray-100 rounded-xl shadow-xl z-50 w-64">
+                <div className="grid grid-cols-5 gap-2">
+                  {Object.keys(iconMap).map((key) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => { setForm({ ...form, icon: key }); setShowIconPicker(false); }}
+                      className={`p-2 rounded-lg flex items-center justify-center hover:bg-gray-50 transition ${form.icon === key ? 'ring-2 ring-cc-lime bg-cc-mint-soft' : ''}`}
+                    >
+                      <CategoryIcon iconKey={key} color={form.icon === key ? form.color : '#9CA3AF'} className="w-5 h-5" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-          <div className="w-32">
+          <div>
             <label className="text-xs font-semibold text-cc-muted uppercase">Color</label>
-            <div className="mt-1 flex items-center gap-2">
-              <input
-                type="color"
-                value={form.color}
-                onChange={(e) => setForm({ ...form, color: e.target.value })}
-                className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5"
-              />
-              <span className="text-xs text-cc-muted">{form.color}</span>
+            <div className="mt-1 flex items-center gap-1.5 h-[42px]">
+              {PRESET_COLORS.map(c => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setForm({ ...form, color: c })}
+                  className={`w-6 h-6 rounded-full border-2 ${form.color === c ? 'border-gray-800 scale-110' : 'border-transparent'}`}
+                  style={{ backgroundColor: c }}
+                />
+              ))}
+              <div className="relative w-6 h-6 rounded-full overflow-hidden border border-gray-200 ml-1">
+                <input
+                  type="color"
+                  value={form.color}
+                  onChange={(e) => setForm({ ...form, color: e.target.value })}
+                  className="absolute -top-2 -left-2 w-10 h-10 cursor-pointer"
+                  title="Custom Color"
+                />
+              </div>
             </div>
           </div>
           <div className="w-40">

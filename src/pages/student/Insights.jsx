@@ -3,13 +3,18 @@ import { Pin, X, Bot, Bookmark, Loader2, Info } from 'lucide-react';
 import api from '../../api';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../../components/Button';
+import { formatMoney } from '../../utils/formatMoney';
 
 export default function Insights() {
-  const { showToast } = useApp();
+  const { showToast, profile } = useApp();
   const [insight, setInsight] = useState(null);
   const [tips, setTips] = useState([]);
+  const [forecast, setForecast] = useState(null);
   const [loadingInsights, setLoadingInsights] = useState(true);
   const [loadingTips, setLoadingTips] = useState(true);
+  const [loadingForecast, setLoadingForecast] = useState(true);
+
+  const [bookmarkedIds, setBookmarkedIds] = useState(new Set());
 
   useEffect(() => {
     const fetchInsights = async () => {
@@ -32,8 +37,32 @@ export default function Insights() {
       setLoadingTips(false);
     };
 
+    const fetchForecast = async () => {
+      try {
+        const res = await api.get('/api/ai/forecast');
+        if (res.data.success) setForecast(res.data.data);
+      } catch (err) {
+        console.error('Failed to fetch forecast', err);
+      }
+      setLoadingForecast(false);
+    };
+
+    const fetchBookmarks = async () => {
+      try {
+        const res = await api.get('/api/bookmarks');
+        if (res.data.success) {
+          const ids = new Set(res.data.data.map((b) => b.refId));
+          setBookmarkedIds(ids);
+        }
+      } catch (err) {
+        console.error('Failed to fetch bookmarks', err);
+      }
+    };
+
     fetchInsights();
     fetchTips();
+    fetchForecast();
+    fetchBookmarks();
   }, []);
 
   const handleToggleTipPin = async (tipId) => {
@@ -49,13 +78,19 @@ export default function Insights() {
   };
 
   const handleBookmarkInsight = async (insightId) => {
+    if (bookmarkedIds.has(insightId)) {
+      showToast('Insight is already in your bookmarks', 'info');
+      return;
+    }
     try {
       const res = await api.post('/api/bookmarks', { refType: 'insight', refId: insightId, note: 'Bookmarked from Insights page' });
       if (res.data.success) {
+        setBookmarkedIds((prev) => new Set([...prev, insightId]));
         showToast('Insight saved to bookmarks!', 'success');
       }
     } catch (err) {
       if (err.response?.status === 409) {
+         setBookmarkedIds((prev) => new Set([...prev, insightId]));
          showToast('Insight is already bookmarked', 'info');
       } else {
          showToast('Failed to bookmark insight', 'error');
@@ -109,14 +144,21 @@ export default function Insights() {
               </div>
               <button
                 type="button"
-                className="p-2 rounded-lg text-cc-muted hover:bg-gray-50 hover:text-cc-lime transition"
-                title="Save to Bookmarks"
+                className={`p-2 rounded-lg transition ${
+                  bookmarkedIds.has(insight._id)
+                    ? 'text-cc-lime bg-cc-mint'
+                    : 'text-cc-muted hover:bg-gray-50 hover:text-cc-lime'
+                }`}
+                title={bookmarkedIds.has(insight._id) ? 'Already Bookmarked' : 'Save to Bookmarks'}
                 onClick={() => handleBookmarkInsight(insight._id)}
               >
-                <Bookmark className="w-4 h-4" />
+                <Bookmark className={`w-4 h-4 ${bookmarkedIds.has(insight._id) ? 'fill-current' : ''}`} />
               </button>
             </div>
-            <p className="text-sm text-cc-ink leading-relaxed mb-3">{insight.text}</p>
+            <p className="text-sm text-cc-ink leading-relaxed mb-3">{insight.summaryText || insight.text}</p>
+            <p className="text-[11px] text-cc-muted italic border-t border-gray-100 pt-2">
+              {insight.disclaimer || 'Notice: This is an advisory suggestion generated based on your spending patterns, not certified financial advice.'}
+            </p>
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-8 text-center text-sm text-cc-muted">
@@ -141,6 +183,9 @@ export default function Insights() {
                   Actionable Idea
                 </span>
                 <p className="text-sm text-cc-ink mt-2">{tip.text}</p>
+                <p className="text-[11px] text-cc-muted italic mt-2">
+                  Notice: This is an advisory suggestion generated based on your spending patterns, not certified financial advice.
+                </p>
               </div>
               <div className="flex gap-1 shrink-0">
                 <button
@@ -165,6 +210,53 @@ export default function Insights() {
         ) : (
           <p className="text-sm text-cc-muted text-center py-8 bg-white rounded-2xl border border-dashed">
             All tips dismissed. New ones appear as you log more transactions.
+          </p>
+        )}
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="font-bold text-cc-forest">Next Month Forecast</h2>
+        <p className="text-xs text-cc-muted -mt-2">Linear regression &amp; moving average projections</p>
+        
+        {loadingForecast ? (
+           <div className="flex items-center justify-center py-10 bg-white border border-gray-100 rounded-2xl shadow-sm">
+              <Loader2 className="w-6 h-6 animate-spin text-cc-lime" />
+           </div>
+        ) : forecast ? (
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs font-bold uppercase text-cc-lime tracking-wide">
+                {forecast.forecastMonth} Projection
+              </span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 uppercase">
+                Confidence: {forecast.confidence}
+              </span>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <p className="text-xs font-semibold text-cc-muted uppercase mb-1">Expected Income</p>
+                <p className="text-lg font-bold text-green-600">{formatMoney(Number(forecast.projections?.income), profile?.currency)}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-cc-muted uppercase mb-1">Expected Expense</p>
+                <p className="text-lg font-bold text-red-600">{formatMoney(Number(forecast.projections?.expense), profile?.currency)}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-cc-muted uppercase mb-1">Net Savings</p>
+                <p className={`text-lg font-bold ${forecast.projections?.netSavings >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {formatMoney(Number(forecast.projections?.netSavings), profile?.currency)}
+                </p>
+              </div>
+            </div>
+            
+            <p className="text-[11px] text-cc-muted mt-4 text-center">
+              Based on {forecast.historicalDataPoints} months of historical data.
+            </p>
+          </div>
+        ) : (
+          <p className="text-sm text-cc-muted text-center py-8 bg-white rounded-2xl border border-dashed">
+            Not enough data to generate a forecast yet.
           </p>
         )}
       </section>

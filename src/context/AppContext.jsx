@@ -43,14 +43,25 @@ export function AppProvider({ children }) {
         const res = await api.get('/api/users/profile');
         if (res.data.success) {
           setProfile(res.data.data);
-          setRole(res.data.data.role);
+          setRole(res.data.data.role); // 'student' or 'admin'
+          setAuthLoading(false);
         }
       } catch (err) {
-
-        setProfile(null);
-        setRole('public');
-      } finally {
-        setAuthLoading(false);
+        if (err.response?.status === 401) {
+          // 401 means no valid cookie, properly log out
+          setProfile(null);
+          setRole('public');
+          setAuthLoading(false);
+        } else if (err.response?.status === 429) {
+          // Rate limited. Do not touch session. Retry silently.
+          setTimeout(checkSession, 1500);
+        } else {
+          // Other unexpected errors
+          setProfile(null);
+          setRole('public');
+          setAuthLoading(false);
+        }
+      }
       }
     };
 
