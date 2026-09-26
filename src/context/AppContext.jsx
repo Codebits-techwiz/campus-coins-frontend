@@ -13,7 +13,8 @@ import {
   suggestCategory,
 } from '../data/mockData';
 
-const AppContext = createContext(null);
+export const AppContext = createContext(null);
+export default AppContext;
 
 export function AppProvider({ children }) {
   const [role, setRole] = useState('public');
@@ -32,10 +33,30 @@ export function AppProvider({ children }) {
   const [profile, setProfile] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [chatOpen, setChatOpen] = useState(false);
+  const [siteContent, setSiteContent] = useState(null);
+  const [branding, setBranding] = useState(null);
 
   const openChat = useCallback(() => setChatOpen(true), []);
   const closeChat = useCallback(() => setChatOpen(false), []);
   const toggleChat = useCallback(() => setChatOpen((v) => !v), []);
+
+  const refreshSiteContent = useCallback(async () => {
+    try {
+      const res = await api.get('/api/site-content');
+      if (res.data.success && res.data.data) {
+        setSiteContent(res.data.data);
+        if (res.data.data.branding) {
+          setBranding(res.data.data.branding);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load site content in AppContext', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshSiteContent();
+  }, [refreshSiteContent]);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -434,6 +455,9 @@ export function AppProvider({ children }) {
     openChat,
     closeChat,
     toggleChat,
+    siteContent,
+    branding,
+    refreshSiteContent,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

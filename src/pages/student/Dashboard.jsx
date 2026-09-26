@@ -9,7 +9,8 @@ import {
   AlertTriangle,
   ArrowRight,
   Lightbulb,
-  X
+  X,
+  Megaphone,
 } from 'lucide-react';
 import {
   PieChart,
@@ -136,11 +137,28 @@ export default function Dashboard() {
       </div>
 
 
-      {(announcements || []).filter((a) => a.active).slice(0, 1).map((a) => (
-        <div key={a._id || a.id} className="bg-cc-mint border border-cc-lime/30 rounded-2xl px-5 py-3 text-sm text-cc-forest">
-          <strong>{a.title}</strong>: {a.body}
-        </div>
-      ))}
+      {(announcements || [])
+        .filter((a) => a.isActive !== false && a.active !== false)
+        .slice(0, 3)
+        .map((a) => (
+          <div
+            key={a._id || a.id}
+            className="bg-gradient-to-r from-emerald-50 via-cc-mint/70 to-emerald-50 border border-cc-lime/40 rounded-2xl p-4 shadow-sm flex items-start gap-3.5 transition hover:shadow-md"
+          >
+            <div className="p-2.5 bg-cc-forest text-cc-lime rounded-xl shrink-0 shadow-sm mt-0.5">
+              <Megaphone className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="font-bold text-cc-forest text-sm">{a.title}</h3>
+                <span className="text-[10px] bg-cc-forest text-white font-bold px-2.5 py-0.5 rounded-full shrink-0">
+                  Campus Announcement
+                </span>
+              </div>
+              <p className="text-xs text-cc-forest/80 mt-1 leading-relaxed">{a.message || a.body || a.desc}</p>
+            </div>
+          </div>
+        ))}
 
       <div className="grid sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">

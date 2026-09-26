@@ -3,23 +3,38 @@ import { ArrowRight, Bot } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/Button';
 import { PageHero } from '../../components/PageHero';
+import { useApp } from '../../context/AppContext';
 
 export default function HowItWorks() {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { siteContent } = useApp();
 
-  const steps = [
+  const defaultSteps = [
     { n: '1', title: t('howItWorks.steps.1.title'), desc: t('howItWorks.steps.1.desc') },
     { n: '2', title: t('howItWorks.steps.2.title'), desc: t('howItWorks.steps.2.desc') },
     { n: '3', title: t('howItWorks.steps.3.title'), desc: t('howItWorks.steps.3.desc') },
   ];
 
+  const dynamicItems = siteContent?.howItWorks?.items;
+  const steps = (dynamicItems && dynamicItems.length > 0)
+    ? dynamicItems.map((item, idx) => ({
+        n: (idx + 1).toString(),
+        title: item.title,
+        desc: item.desc,
+      }))
+    : defaultSteps;
+
+  const eyebrow = siteContent?.howItWorks?.badge || t('howItWorks.eyebrow');
+  const title = siteContent?.howItWorks?.title || t('howItWorks.title');
+  const subtitle = siteContent?.howItWorks?.subtitle || t('howItWorks.subtitle');
+
   return (
     <div className="animate-fade-in min-h-[70vh]">
       <PageHero
-        eyebrow={t('howItWorks.eyebrow')}
-        title={t('howItWorks.title')}
-        subtitle={t('howItWorks.subtitle')}
+        eyebrow={eyebrow}
+        title={title}
+        subtitle={subtitle}
       />
 
       <section className="py-16 sm:py-20 bg-cc-mint-soft">
@@ -87,3 +102,4 @@ export default function HowItWorks() {
     </div>
   );
 }
+

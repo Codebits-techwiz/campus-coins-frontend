@@ -31,6 +31,7 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminCategories from './pages/admin/AdminCategories';
 import AdminAnnouncements from './pages/admin/AdminAnnouncements';
 import AdminTipTemplates from './pages/admin/AdminTipTemplates';
+import AdminSiteContent from './pages/admin/AdminSiteContent';
 import AdminStats from './pages/admin/AdminStats';
 import { PageLoader, RouteLoader } from './components/PageLoader';
 
@@ -111,6 +112,7 @@ function AppRoutes() {
           <Route path="categories" element={<AdminCategories />} />
           <Route path="announcements" element={<AdminAnnouncements />} />
           <Route path="tip-templates" element={<AdminTipTemplates />} />
+          <Route path="site-content" element={<AdminSiteContent />} />
           <Route path="stats" element={<AdminStats />} />
         </Route>
 

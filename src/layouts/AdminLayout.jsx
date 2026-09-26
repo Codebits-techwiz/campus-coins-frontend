@@ -10,6 +10,7 @@ import {
   X,
   LogOut,
   Shield,
+  FileText,
 } from 'lucide-react';
 import { Logo } from '../components/Logo';
 import { Toast } from '../components/Toast';
@@ -22,6 +23,7 @@ const links = [
   { to: '/admin/categories', label: 'Categories', icon: Tags },
   { to: '/admin/announcements', label: 'Announcements', icon: Megaphone },
   { to: '/admin/tip-templates', label: 'Tip Templates', icon: Shield },
+  { to: '/admin/site-content', label: 'Landing Page CMS', icon: FileText },
   { to: '/admin/stats', label: 'Usage Stats', icon: BarChart3 },
 ];
 

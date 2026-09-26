@@ -10,8 +10,8 @@ const navLinkDefs = [
   { key: 'home', to: '/' },
   { key: 'features', to: '/features' },
   { key: 'howItWorks', to: '/how-it-works' },
-  { key: 'pricing', to: '/pricing' },
   { key: 'testimonials', to: '/testimonials' },
+  { key: 'sitemap', to: '/sitemap' },
 ];
 
 export function Navbar() {
