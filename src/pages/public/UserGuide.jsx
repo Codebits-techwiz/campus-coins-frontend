@@ -109,25 +109,25 @@ const USE_CASES = [
   {
     title: 'Hostel Resident',
     icon: Home,
-    bg: 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600',
+    bg: 'bg-emerald-50 text-emerald-600',
     desc: 'Keep rent, laundry, shared mess bills, and weekend takeaways organized under specific category caps.',
   },
   {
     title: 'Commuter Student',
     icon: Bus,
-    bg: 'bg-blue-50 dark:bg-blue-950/30 text-blue-600',
+    bg: 'bg-blue-50 text-blue-600',
     desc: 'Compare daily van fares vs ride-shares to calculate monthly transport savings in PKR.',
   },
   {
     title: 'Allowance & Pocket Money Manager',
     icon: GraduationCap,
-    bg: 'bg-purple-50 dark:bg-purple-950/30 text-purple-600',
+    bg: 'bg-purple-50 text-purple-600',
     desc: 'Never run out of money mid-semester. Track pocket money distribution day by day.',
   },
   {
     title: 'Gig Worker & Freelancer',
     icon: Laptop,
-    bg: 'bg-amber-50 dark:bg-amber-950/30 text-amber-600',
+    bg: 'bg-amber-50 text-amber-600',
     desc: 'Log irregular freelance income, tutoring fees, and scholarships alongside regular expenses.',
   },
 ];
@@ -288,19 +288,21 @@ export default function UserGuide() {
   );
 
   return (
-    <div className="animate-fade-in min-h-[70vh] pb-16 bg-[#FAFCFB] dark:bg-[#0f1f1a]">
-      {/* Light Mint Hero Header matching Home.jsx theme */}
+    <div className="animate-fade-in min-h-[70vh] pb-16">
       <PageHero
-        variant="light"
         eyebrow={isUr ? 'رہنمائی اور مدد' : 'Documentation & Help'}
         title={isUr ? 'کیمپس کوائن یوزر گائیڈ' : 'Campus Coin User Guide'}
-        subtitle={isUr ? 'الاؤنس سنبھالنے، بجٹ بنانے اور اے آئی ٹپس استعمال کرنے کے لیے سب کچھ۔' : 'Everything you need to master your student allowance, set budgets, log expenses in PKR, and use AI tips.'}
+        subtitle={
+          isUr
+            ? 'الاؤنس سنبھالنے، بجٹ بنانے اور اے آئی ٹپس استعمال کرنے کے لیے سب کچھ۔'
+            : 'Everything you need to master your student allowance, set budgets, log expenses in PKR, and use AI tips.'
+        }
       />
 
       {/* Floating Sleek Search Bar */}
       <section className="-mt-7 sm:-mt-8 max-w-2xl mx-auto px-4 relative z-20">
-        <div className="bg-white dark:bg-[#1a3026] rounded-full shadow-xl border border-gray-100 dark:border-[#2a4538] p-2 sm:p-2.5 flex items-center gap-3 ring-1 ring-black/5 dark:ring-white/10 transition-all focus-within:ring-2 focus-within:ring-cc-lime">
-          <div className="w-10 h-10 rounded-full bg-[#E8F5E9] dark:bg-[#224235] text-cc-forest dark:text-cc-lime flex items-center justify-center shrink-0 ltr:ml-1 rtl:mr-1">
+        <div className="bg-white rounded-full shadow-xl border border-gray-100 p-2 sm:p-2.5 flex items-center gap-3 ring-1 ring-black/5 transition-all focus-within:ring-2 focus-within:ring-cc-lime">
+          <div className="w-10 h-10 rounded-full bg-cc-mint text-cc-forest flex items-center justify-center shrink-0 ltr:ml-1 rtl:mr-1">
             <Search className="w-5 h-5" />
           </div>
           <input
@@ -308,19 +310,19 @@ export default function UserGuide() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={isUr ? 'تلاش کریں (مثلاً بجٹ، الاؤنس، اے آئی ٹپس)...' : 'Search guide topics (e.g. budgets, allowance, AI tips, PKR)...'}
-            className="w-full bg-transparent border-none outline-none text-sm font-medium text-cc-forest dark:text-white placeholder-gray-400 dark:placeholder-gray-500 text-start px-1"
+            className="w-full bg-transparent border-none outline-none text-sm font-medium text-cc-forest placeholder-gray-400 text-start px-1"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="text-xs font-semibold text-cc-muted dark:text-gray-300 hover:text-cc-forest dark:hover:text-white px-3 py-1.5 rounded-full bg-gray-100 dark:bg-[#224235] transition shrink-0 ltr:mr-1 rtl:ml-1"
+              className="text-xs font-semibold text-cc-muted hover:text-cc-forest px-3 py-1.5 rounded-full bg-gray-100 transition shrink-0 ltr:mr-1 rtl:ml-1"
             >
               {isUr ? 'صاف کریں' : 'Clear'}
             </button>
           )}
         </div>
         {searchQuery && (
-          <div className="mt-2 text-center text-xs font-semibold text-cc-muted dark:text-gray-400">
+          <div className="mt-2 text-center text-xs font-semibold text-cc-muted">
             {isUr ? `"${searchQuery}" کے لیے نتائج` : `Showing topics matching "${searchQuery}"`}
           </div>
         )}
@@ -328,7 +330,7 @@ export default function UserGuide() {
 
       {/* Quick Stats Strip (Matching Home Page dark green banner bar) */}
       <section className="mt-8 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-cc-forest dark:bg-[#07241b] text-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-md border border-cc-forest-light dark:border-[#2a4538] grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+        <div className="bg-cc-forest text-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-md border border-cc-forest-light grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
           <div className="space-y-1">
             <div className="text-xl sm:text-2xl font-extrabold text-cc-lime">100%</div>
             <div className="text-xs text-white/80 font-medium">{isUr ? 'بینک فری اور محفوظ' : 'Bank-Free & Secure'}</div>
@@ -366,29 +368,29 @@ export default function UserGuide() {
                   }}
                   className={`group relative p-5 sm:p-6 rounded-2xl text-start transition-all duration-200 border flex flex-col justify-between h-full min-h-[140px] cursor-pointer ${
                     isSelected
-                      ? 'bg-cc-forest dark:bg-[#06241a] text-white border-cc-forest dark:border-cc-lime/50 shadow-xl ring-2 ring-cc-lime/50 -translate-y-0.5'
-                      : 'bg-white dark:bg-[#162b22] text-cc-forest dark:text-white border-gray-100 dark:border-[#2a4538] hover:border-cc-lime/40 hover:shadow-md hover:-translate-y-0.5'
+                      ? 'bg-white text-cc-forest border-cc-lime shadow-md ring-2 ring-cc-lime/40 -translate-y-0.5'
+                      : 'bg-white text-cc-forest border-gray-100 hover:border-cc-lime/40 hover:shadow-md hover:-translate-y-0.5'
                   }`}
                 >
                   <div className="flex items-center justify-between w-full mb-3">
                     <div className={`p-2.5 rounded-xl border transition ${
                       isSelected
-                        ? 'bg-cc-lime/20 text-cc-lime border-cc-lime/30'
-                        : 'bg-[#E8F5E9] dark:bg-[#224235] text-cc-forest dark:text-cc-lime border-cc-lime/20 group-hover:bg-cc-lime/10'
+                        ? 'bg-cc-mint text-cc-forest border-cc-lime/40'
+                        : 'bg-cc-mint text-cc-forest border-cc-lime/20 group-hover:bg-cc-lime/10'
                     }`}>
                       <Icon className="w-5 h-5" />
                     </div>
                     {isSelected && (
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-cc-lime text-cc-forest shadow-xs">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-cc-mint text-cc-forest border border-cc-lime/40 shadow-xs">
                         {isUr ? 'فعال' : 'Active'}
                       </span>
                     )}
                   </div>
                   <div>
-                    <h3 className={`font-bold text-sm sm:text-base leading-snug ${isSelected ? 'text-white' : 'text-cc-forest dark:text-white'}`}>
+                    <h3 className="font-bold text-sm sm:text-base leading-snug text-cc-forest">
                       {sec.title}
                     </h3>
-                    <p className={`text-xs mt-1.5 line-clamp-2 leading-relaxed ${isSelected ? 'text-white/80' : 'text-cc-muted dark:text-gray-400'}`}>
+                    <p className="text-xs mt-1.5 line-clamp-2 leading-relaxed text-cc-muted">
                       {sec.summary}
                     </p>
                   </div>
@@ -404,24 +406,24 @@ export default function UserGuide() {
             return (
               <div
                 key={sec.id}
-                className="bg-white dark:bg-[#162b22] rounded-3xl border border-gray-100 dark:border-[#2a4538] shadow-md p-6 sm:p-8 lg:p-10 space-y-8 animate-fade-in"
+                className="bg-white rounded-3xl border border-gray-100 shadow-md p-6 sm:p-8 lg:p-10 space-y-8 animate-fade-in"
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-gray-100 dark:border-[#2a4538]">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-gray-100">
                   <div className="flex items-center gap-4">
-                    <div className="p-3.5 rounded-2xl bg-[#E8F5E9] dark:bg-[#224235] text-cc-forest dark:text-cc-lime border border-cc-lime/30 shrink-0">
+                    <div className="p-3.5 rounded-2xl bg-cc-mint text-cc-forest border border-cc-lime/30 shrink-0">
                       <Icon className="w-7 h-7" />
                     </div>
                     <div className="text-start">
-                      <h2 className="text-2xl sm:text-3xl font-extrabold text-cc-forest dark:text-white tracking-tight">
+                      <h2 className="text-2xl sm:text-3xl font-extrabold text-cc-forest tracking-tight">
                         {sec.title}
                       </h2>
-                      <p className="text-xs sm:text-sm text-cc-muted dark:text-gray-300 mt-1 font-medium">
+                      <p className="text-xs sm:text-sm text-cc-muted mt-1 font-medium">
                         {sec.summary}
                       </p>
                     </div>
                   </div>
                   <div className="self-start sm:self-center shrink-0">
-                    <span className="text-xs font-bold uppercase tracking-wider px-3.5 py-1 rounded-full bg-[#E8F5E9] dark:bg-cc-lime/20 text-cc-forest dark:text-cc-lime border border-cc-lime/30">
+                    <span className="text-xs font-bold uppercase tracking-wider px-3.5 py-1 rounded-full bg-cc-mint text-cc-forest border border-cc-lime/30">
                       {isUr ? '۳ آسان مراحل' : '3 Step Guide'}
                     </span>
                   </div>
@@ -431,15 +433,15 @@ export default function UserGuide() {
                   {sec.steps.map((step, idx) => (
                     <div
                       key={idx}
-                      className="p-6 rounded-2xl bg-[#F0FAF2] dark:bg-[#1f3a2e] border border-[#E8F5E9] dark:border-[#2a4538] hover:border-cc-lime/50 hover:shadow-md transition space-y-3 flex flex-col justify-start text-start h-full"
+                      className="p-6 rounded-2xl bg-cc-mint-soft border border-cc-mint hover:border-cc-lime/50 hover:shadow-md transition space-y-3 flex flex-col justify-start text-start h-full"
                     >
-                      <div className="w-9 h-9 rounded-xl bg-cc-lime/20 dark:bg-cc-lime/25 text-cc-forest dark:text-cc-lime font-black text-sm flex items-center justify-center shrink-0 border border-cc-lime/30">
+                      <div className="w-9 h-9 rounded-xl bg-cc-lime/20 text-cc-forest font-black text-sm flex items-center justify-center shrink-0 border border-cc-lime/30">
                         0{idx + 1}
                       </div>
-                      <h3 className="font-bold text-base sm:text-lg text-cc-forest dark:text-white leading-snug">
+                      <h3 className="font-bold text-base sm:text-lg text-cc-forest leading-snug">
                         {step.title}
                       </h3>
-                      <p className="text-xs sm:text-sm text-cc-muted dark:text-gray-300 leading-relaxed">
+                      <p className="text-xs sm:text-sm text-cc-muted leading-relaxed">
                         {step.desc}
                       </p>
                     </div>
@@ -450,12 +452,12 @@ export default function UserGuide() {
           })}
 
           {filteredSections.length === 0 && (
-            <div className="bg-white dark:bg-[#162b22] rounded-3xl border border-gray-100 dark:border-[#2a4538] p-12 text-center space-y-3">
-              <BookOpen className="w-10 h-10 text-cc-muted dark:text-gray-400 mx-auto" />
-              <h3 className="text-lg font-bold text-cc-forest dark:text-white">
+            <div className="bg-white rounded-3xl border border-gray-100 p-12 text-center space-y-3">
+              <BookOpen className="w-10 h-10 text-cc-muted mx-auto" />
+              <h3 className="text-lg font-bold text-cc-forest">
                 {isUr ? 'کوئی نتائج نہیں ملے' : 'No matching guide topics found'}
               </h3>
-              <p className="text-xs text-cc-muted dark:text-gray-400 max-w-sm mx-auto">
+              <p className="text-xs text-cc-muted max-w-sm mx-auto">
                 {isUr ? 'براہ کرم کوئی دوسرا لفظ تلاش کریں یا سرچ بار صاف کریں۔' : 'Try searching for different keywords like "budget", "allowance", or "reports".'}
               </p>
               <button
@@ -470,10 +472,10 @@ export default function UserGuide() {
           {/* Student Use Cases Grid (Solid Dark Forest Green Cards matching Home.jsx "Whatever your campus hustle looks like" section) */}
           <div className="space-y-6 pt-4">
             <div className="text-center max-w-xl mx-auto space-y-2">
-              <span className="text-xs font-extrabold uppercase tracking-widest px-3 py-1 rounded-full bg-[#E8F5E9] dark:bg-cc-lime/20 text-cc-forest dark:text-cc-lime border border-cc-lime/30 inline-block">
+              <span className="text-xs font-extrabold uppercase tracking-widest px-3 py-1 rounded-full bg-cc-mint text-cc-forest border border-cc-lime/30 inline-block">
                 {isUr ? 'آپ کے لیے خاص' : 'Tailored For You'}
               </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-cc-forest dark:text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-cc-forest tracking-tight">
                 {isUr ? 'کیمپس کوائن آپ کے لائف سٹائل کے ساتھ کیسے چلتا ہے' : 'How Campus Coin Fits Your Student Lifestyle'}
               </h2>
             </div>
@@ -483,7 +485,7 @@ export default function UserGuide() {
                 return (
                   <div
                     key={uc.title}
-                    className="p-6 rounded-2xl bg-cc-forest dark:bg-[#07261c] text-white border border-cc-forest-light dark:border-[#2a4538] shadow-md hover:border-cc-lime hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between text-start h-full"
+                    className="p-6 rounded-2xl bg-cc-forest text-white border border-cc-forest-light shadow-md hover:border-cc-lime hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between text-start h-full"
                   >
                     <div>
                       <div className="p-3 rounded-xl w-fit mb-4 bg-white/10 text-cc-lime border border-white/15">
@@ -503,12 +505,12 @@ export default function UserGuide() {
           </div>
 
           {/* FAQ Section */}
-          <div className="bg-white dark:bg-[#162b22] rounded-3xl border border-gray-100 dark:border-[#2a4538] p-6 sm:p-8 lg:p-10 space-y-6 shadow-sm">
-            <div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-[#2a4538]">
-              <div className="p-2.5 rounded-xl bg-[#E8F5E9] dark:bg-[#224235] text-cc-forest dark:text-cc-lime border border-cc-lime/30 shrink-0">
+          <div className="bg-white rounded-3xl border border-gray-100 p-6 sm:p-8 lg:p-10 space-y-6 shadow-sm">
+            <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
+              <div className="p-2.5 rounded-xl bg-cc-mint text-cc-forest border border-cc-lime/30 shrink-0">
                 <HelpCircle className="w-6 h-6" />
               </div>
-              <h2 className="text-xl sm:text-2xl font-extrabold text-cc-forest dark:text-white text-start tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-extrabold text-cc-forest text-start tracking-tight">
                 {isUr ? 'عام سوالات و جوابات' : 'Frequently Asked User Questions'}
               </h2>
             </div>
@@ -516,12 +518,12 @@ export default function UserGuide() {
               {faqs.map((faq, idx) => (
                 <div
                   key={idx}
-                  className="p-6 rounded-2xl bg-[#F0FAF2] dark:bg-[#1f3a2e] space-y-3 flex flex-col justify-start text-start h-full border border-[#E8F5E9] dark:border-[#2a4538] hover:border-cc-lime/40 transition"
+                  className="p-6 rounded-2xl bg-cc-mint-soft space-y-3 flex flex-col justify-start text-start h-full border border-cc-mint hover:border-cc-lime/40 transition"
                 >
-                  <h3 className="font-bold text-sm sm:text-base text-cc-forest dark:text-white leading-snug">
+                  <h3 className="font-bold text-sm sm:text-base text-cc-forest leading-snug">
                     {faq.q}
                   </h3>
-                  <p className="text-xs sm:text-sm text-cc-muted dark:text-gray-300 leading-relaxed font-normal">
+                  <p className="text-xs sm:text-sm text-cc-muted leading-relaxed font-normal">
                     {faq.a}
                   </p>
                 </div>
@@ -530,7 +532,7 @@ export default function UserGuide() {
           </div>
 
           {/* CTA Banner (Matching Home Page bottom dark banner) */}
-          <div className="bg-cc-forest dark:bg-[#07241b] rounded-3xl p-8 sm:p-12 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl relative overflow-hidden border border-cc-forest-light dark:border-[#2a4538]">
+          <div className="bg-cc-forest rounded-3xl p-8 sm:p-12 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl relative overflow-hidden border border-cc-forest-light">
             <div className="absolute top-0 right-0 w-64 h-64 bg-cc-lime/10 rounded-full blur-3xl pointer-events-none" />
             <div className="relative z-10 space-y-2 text-center md:text-start max-w-xl">
               <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
@@ -543,7 +545,7 @@ export default function UserGuide() {
             <div className="relative z-10 flex flex-wrap items-center justify-center md:justify-end gap-3 shrink-0">
               <Button
                 onClick={() => navigate('/register')}
-                className="!rounded-full h-12 !px-7 flex items-center justify-center font-bold text-sm shadow-lg !bg-white !text-cc-forest hover:!bg-[#E8F5E9]"
+                className="!rounded-full h-12 !px-7 flex items-center justify-center font-bold text-sm shadow-lg !bg-white !text-cc-forest hover:!bg-cc-mint"
               >
                 {t('common.createFreeAccount')} <ArrowRight className="w-4 h-4 rtl:rotate-180 ltr:ml-2 rtl:mr-2 text-cc-forest" />
               </Button>
