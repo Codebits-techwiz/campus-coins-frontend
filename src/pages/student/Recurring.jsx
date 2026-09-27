@@ -90,12 +90,12 @@ export default function Recurring() {
         res = await api.post('/api/recurring', payload);
       }
       if (res.data.success) {
-        showToast(`Rule ${editing ? 'updated' : 'added'} successfully`, 'success');
+        showToast(editing ? t('app.recurring.ruleUpdated') : t('app.recurring.ruleAdded'), 'success');
         setShowForm(false);
         fetchRules();
       }
     } catch (err) {
-      showToast(err.response?.data?.message || 'Failed to save rule', 'error');
+      showToast(err.response?.data?.message || t('app.recurring.ruleSaveFailed'), 'error');
     }
     setSubmitting(false);
   };
@@ -122,7 +122,7 @@ export default function Recurring() {
            <p className="text-sm text-cc-muted text-center p-8">{t('common.loading')}</p>
         ) : rules.length === 0 ? (
           <p className="text-sm text-cc-muted text-center p-8">
-            {t('app.budgets.noBudgets')}
+            {t('app.recurring.noRules')}
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -184,21 +184,21 @@ export default function Recurring() {
             <button type="button" className="absolute right-4 top-4 p-1 text-cc-muted hover:text-red-500 rounded-full hover:bg-red-50 transition" onClick={() => setShowForm(false)}>
               <X className="w-5 h-5" />
             </button>
-            <h2 className="font-bold text-cc-forest mb-4">{editing ? 'Edit' : 'Add'} Recurring Rule</h2>
+            <h2 className="font-bold text-cc-forest mb-4">{editing ? t('app.recurring.editRule') : t('app.recurring.addRule')}</h2>
             <form onSubmit={handleSubmit} className="grid sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-semibold text-cc-muted uppercase">Type</label>
+                <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.transactions.type')}</label>
                 <select
                   value={form.type}
                   onChange={(e) => setForm({ ...form, type: e.target.value, categoryId: '' })}
                   className="mt-1 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-cc-lime"
                 >
-                  <option value="expense">Expense</option>
-                  <option value="income">Income</option>
+                  <option value="expense">{t('app.transactions.expense')}</option>
+                  <option value="income">{t('app.transactions.income')}</option>
                 </select>
               </div>
               <div>
-                <label className="text-xs font-semibold text-cc-muted uppercase">Amount ({profile?.currency || 'USD'})</label>
+                <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.transactions.amount')} ({profile?.currency || 'USD'})</label>
                 <input
                   type="number"
                   step="0.01"
@@ -210,25 +210,25 @@ export default function Recurring() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="text-xs font-semibold text-cc-muted uppercase">Description</label>
+                <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.transactions.description')}</label>
                 <input
                   type="text"
                   required
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  placeholder="e.g. Netflix Subscription"
+                  placeholder={t('app.recurring.descPlaceholder')}
                   className="mt-1 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-cc-lime"
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-cc-muted uppercase">Category</label>
+                <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.transactions.category')}</label>
                 <select
                   required
                   value={form.categoryId}
                   onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
                   className="mt-1 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-cc-lime"
                 >
-                  <option value="">Select…</option>
+                  <option value="">{t('app.transactions.select')}</option>
                   {categories.filter(c => c.type === form.type).map((c) => (
                     <option key={c._id || c.id} value={c._id || c.id}>
                       {c.name}
@@ -237,19 +237,19 @@ export default function Recurring() {
                 </select>
               </div>
               <div>
-                <label className="text-xs font-semibold text-cc-muted uppercase">Frequency</label>
+                <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.recurring.frequency')}</label>
                 <select
                   required
                   value={form.frequency}
                   onChange={(e) => setForm({ ...form, frequency: e.target.value })}
                   className="mt-1 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-cc-lime"
                 >
-                  <option value="weekly">Weekly</option>
-                  <option value="monthly">Monthly</option>
+                  <option value="weekly">{t('app.recurring.weekly')}</option>
+                  <option value="monthly">{t('app.recurring.monthly')}</option>
                 </select>
               </div>
               <div>
-                <label className="text-xs font-semibold text-cc-muted uppercase">Next Run Date</label>
+                <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.recurring.nextRun')}</label>
                 <input
                   type="date"
                   required
@@ -266,12 +266,12 @@ export default function Recurring() {
                     onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
                     className="w-4 h-4 rounded text-cc-lime focus:ring-cc-lime"
                   />
-                  <span className="text-sm font-semibold text-cc-ink">Active</span>
+                  <span className="text-sm font-semibold text-cc-ink">{t('app.recurring.active')}</span>
                 </label>
               </div>
               <div className="sm:col-span-2">
                 <Button type="submit" disabled={submitting} className="!rounded-xl">
-                  {submitting ? 'Saving...' : editing ? 'Save Changes' : 'Add Rule'}
+                  {submitting ? t('app.transactions.saving') : editing ? t('app.transactions.saveChanges') : t('app.recurring.addRule')}
                 </Button>
               </div>
             </form>

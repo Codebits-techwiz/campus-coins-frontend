@@ -63,7 +63,7 @@ export default function Categories() {
             <CategoryIcon iconKey={c.icon} color={c.color} className="w-5 h-5" />
             <div>
               <p className="font-semibold text-cc-forest">{translateDynamicText(c.name, i18n.language)}</p>
-              <p className="text-xs text-cc-muted capitalize">{c.type} / {c.isDefault ? 'Default' : 'Personal'}</p>
+              <p className="text-xs text-cc-muted capitalize">{t(`app.transactions.${c.type}`)} / {c.isDefault ? t('app.categories.default') : t('app.categories.personal')}</p>
             </div>
           </div>
           {allowEdit && (
@@ -99,7 +99,7 @@ export default function Categories() {
             <X className="w-4 h-4 text-cc-muted" />
           </button>
           <div className="flex-1 min-w-[160px]">
-            <label className="text-xs font-semibold text-cc-muted uppercase">Name</label>
+            <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.categories.name')}</label>
             <input
               required
               value={form.name}
@@ -108,7 +108,7 @@ export default function Categories() {
             />
           </div>
           <div className="relative" ref={iconPickerRef}>
-            <label className="text-xs font-semibold text-cc-muted uppercase">Icon</label>
+            <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.categories.icon')}</label>
             <div className="mt-1">
               <button
                 type="button"
@@ -136,7 +136,7 @@ export default function Categories() {
             )}
           </div>
           <div>
-            <label className="text-xs font-semibold text-cc-muted uppercase">Color</label>
+            <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.categories.color')}</label>
             <div className="mt-1 flex items-center gap-1.5 h-[42px]">
               {PRESET_COLORS.map(c => (
                 <button
@@ -153,33 +153,33 @@ export default function Categories() {
                   value={form.color}
                   onChange={(e) => setForm({ ...form, color: e.target.value })}
                   className="absolute -top-2 -left-2 w-10 h-10 cursor-pointer"
-                  title="Custom Color"
+                  title={t('app.categories.customColor')}
                 />
               </div>
             </div>
           </div>
           <div className="w-40">
-            <label className="text-xs font-semibold text-cc-muted uppercase">Type</label>
+            <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.categories.type')}</label>
             <select
               value={form.type}
               onChange={(e) => setForm({ ...form, type: e.target.value })}
               className="mt-1 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm"
             >
-              <option value="expense">Expense</option>
-              <option value="income">Income</option>
+              <option value="expense">{t('app.transactions.expense')}</option>
+              <option value="income">{t('app.transactions.income')}</option>
             </select>
           </div>
           <Button type="submit" disabled={loading} className="!rounded-xl">
-            {loading ? 'Saving...' : editId ? 'Save' : 'Create'}
+            {loading ? t('app.categories.saving') : editId ? t('app.categories.save') : t('app.categories.create')}
           </Button>
         </form>
       )}
 
       <section>
-        <h2 className="font-bold text-cc-forest mb-3">Your Personal Categories</h2>
+        <h2 className="font-bold text-cc-forest mb-3">{t('app.categories.personalTitle')}</h2>
         {personal.length === 0 ? (
           <p className="text-sm text-cc-muted bg-white rounded-xl border border-dashed border-gray-200 p-6 text-center">
-            No personal categories yet. Add ones like &ldquo;Campus Cafe&rdquo; or &ldquo;Freelance&rdquo;.
+            {t('app.categories.personalEmpty')}
           </p>
         ) : (
           <CatList items={personal} allowEdit />
@@ -187,8 +187,8 @@ export default function Categories() {
       </section>
 
       <section>
-        <h2 className="font-bold text-cc-forest mb-3">System Default Categories</h2>
-        <p className="text-xs text-cc-muted mb-3">Provided to all students. View only (admin can edit defaults)</p>
+        <h2 className="font-bold text-cc-forest mb-3">{t('app.categories.defaultsTitle')}</h2>
+        <p className="text-xs text-cc-muted mb-3">{t('app.categories.defaultsHint')}</p>
         <CatList items={defaults} allowEdit={false} />
       </section>
     </div>

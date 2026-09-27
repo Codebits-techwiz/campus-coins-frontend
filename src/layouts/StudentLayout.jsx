@@ -26,8 +26,10 @@ import {
 } from 'lucide-react';
 import { Logo } from '../components/Logo';
 import { Toast } from '../components/Toast';
+import { FaqChatbot } from '../components/FaqChatbot';
 import { useApp } from '../context/AppContext';
 import api from '../api';
+import { getAvatarUrl } from '../utils/avatarUrl';
 
 const links = [
   { to: '/app', end: true, key: 'dashboard', icon: LayoutDashboard },
@@ -50,7 +52,20 @@ export function StudentLayout() {
   const { profile, setProfile, setRole, darkMode, setDarkMode, fontSize, setFontSize, announcements } = useApp();
   const location = useLocation();
   const pathnames = location.pathname.split('/').filter((x) => x);
-  const breadcrumbText = pathnames.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' / ');
+  const breadcrumbLabels = {
+    app: t('studentNav.studentPortal'),
+    transactions: t('studentNav.transactions'),
+    categories: t('studentNav.categories'),
+    budgets: t('studentNav.budgets'),
+    recurring: t('studentNav.recurring'),
+    reports: t('studentNav.reports'),
+    insights: t('studentNav.insights'),
+    bookmarks: t('studentNav.bookmarks'),
+    profile: t('studentNav.profile'),
+  };
+  const breadcrumbText = pathnames
+    .map((p) => breadcrumbLabels[p] || (p.charAt(0).toUpperCase() + p.slice(1)))
+    .join(' / ');
 
   const userKey = profile?._id || profile?.id || 'default';
   const storageKey = `cc_read_announcements_${userKey}`;
@@ -149,7 +164,7 @@ export function StudentLayout() {
               type="button"
               onClick={() => setFontSize(fontSize === 'lg' ? 'md' : fontSize === 'md' ? 'sm' : 'lg')}
               className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-white/10 text-xs font-medium hover:bg-white/15"
-              title="Font size"
+              title={t('studentNav.fontSize')}
             >
               <Type className="w-3.5 h-3.5" />
               {fontSize.toUpperCase()}
@@ -186,10 +201,10 @@ export function StudentLayout() {
               type="button"
               onClick={toggleLanguage}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 text-cc-forest hover:bg-cc-mint transition text-xs font-bold"
-              title="Toggle Language (زبان تبدیل کریں)"
+              title={t('nav.language')}
             >
               <Languages className="w-4 h-4" />
-              <span>{i18n.language === 'ur' ? 'English' : 'اردو'}</span>
+              <span>{i18n.language === 'ur' ? t('nav.english') : t('nav.urdu')}</span>
             </button>
             {/* Header Bell Icon Button & Dropdown */}
             <div className="relative">
@@ -200,7 +215,7 @@ export function StudentLayout() {
                   setProfileMenuOpen(false);
                 }}
                 className="relative p-2.5 rounded-xl bg-gray-50 border border-gray-200 text-cc-forest hover:bg-cc-mint hover:text-cc-forest transition flex items-center justify-center"
-                title="Campus Announcements"
+                title={t('studentNav.announcements')}
               >
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && (
@@ -220,7 +235,7 @@ export function StudentLayout() {
                         <div className="p-1.5 bg-cc-forest text-cc-lime rounded-lg">
                           <Megaphone className="w-4 h-4" />
                         </div>
-                        <h3 className="font-extrabold text-sm text-cc-forest">Campus Announcements</h3>
+                        <h3 className="font-extrabold text-sm text-cc-forest">{t('studentNav.announcements')}</h3>
                       </div>
                       {unreadCount > 0 ? (
                         <button
@@ -228,10 +243,10 @@ export function StudentLayout() {
                           onClick={handleMarkAllRead}
                           className="text-[11px] font-bold text-cc-forest hover:text-cc-lime flex items-center gap-1 cursor-pointer"
                         >
-                          <CheckCheck className="w-3.5 h-3.5 text-cc-lime" /> Mark Read
+                          <CheckCheck className="w-3.5 h-3.5 text-cc-lime" /> {t('studentNav.markRead')}
                         </button>
                       ) : (
-                        <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-bold">Up to date</span>
+                        <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-bold">{t('studentNav.upToDate')}</span>
                       )}
                     </div>
 
@@ -239,7 +254,7 @@ export function StudentLayout() {
                       {activeAnnouncements.length === 0 ? (
                         <div className="py-8 text-center space-y-2">
                           <Sparkles className="w-8 h-8 text-cc-muted mx-auto opacity-30" />
-                          <p className="text-xs text-cc-muted font-medium">No announcements right now.</p>
+                          <p className="text-xs text-cc-muted font-medium">{t('studentNav.noAnnouncements')}</p>
                         </div>
                       ) : (
                         activeAnnouncements.map((a) => {
@@ -267,10 +282,10 @@ export function StudentLayout() {
                                       : 'bg-cc-mint text-cc-forest'
                                   }`}
                                 >
-                                  {a.category || 'General'} • {(a.priority || 'normal').toUpperCase()}
+                                  {a.category || t('studentNav.general')} • {(a.priority || 'normal').toUpperCase()}
                                 </span>
                                 <span className="text-[10px] text-cc-muted">
-                                  {a.createdAt ? new Date(a.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recent'}
+                                  {a.createdAt ? new Date(a.createdAt).toLocaleDateString(i18n.language === 'ur' ? 'ur-PK' : 'en-US', { month: 'short', day: 'numeric' }) : t('studentNav.recent')}
                                 </span>
                               </div>
 
@@ -289,16 +304,24 @@ export function StudentLayout() {
             {/* Profile Menu Dropdown */}
             <div className="relative">
               <button onClick={() => { setProfileMenuOpen(!profileMenuOpen); setBellOpen(false); }} className="flex items-center gap-3 hover:opacity-80 transition cursor-pointer text-left bg-transparent border-none p-0 outline-none">
-                {profile?.avatar ? (
-                  <img src={profile.avatar} alt="" className="w-9 h-9 rounded-full ring-2 ring-cc-mint object-cover" />
+                {getAvatarUrl(profile?.avatar) ? (
+                  <img src={getAvatarUrl(profile.avatar)} alt="" className="w-9 h-9 rounded-full ring-2 ring-cc-mint object-cover" />
                 ) : (
                   <div className="w-9 h-9 rounded-full ring-2 ring-cc-mint bg-cc-lime flex items-center justify-center text-white font-bold text-sm">
                     {profile?.name?.[0]?.toUpperCase() || '?'}
                   </div>
                 )}
                 <div className="hidden sm:block text-right">
-                  <p className="text-sm font-bold text-cc-forest leading-tight">{profile?.name || 'Student'}</p>
-                  <p className="text-[11px] text-cc-muted">{profile?.academicYear || profile?.email || ''}</p>
+                  <p className="text-sm font-bold text-cc-forest leading-tight">{profile?.name || t('studentNav.student')}</p>
+                  <p className="text-[11px] text-cc-muted">
+                    {({
+                      'Year 1': t('app.profile.year1'),
+                      'Year 2': t('app.profile.year2'),
+                      'Year 3': t('app.profile.year3'),
+                      'Year 4': t('app.profile.year4'),
+                      Graduate: t('app.profile.graduate'),
+                    })[profile?.academicYear] || profile?.academicYear || profile?.email || ''}
+                  </p>
                 </div>
               </button>
               
@@ -307,20 +330,20 @@ export function StudentLayout() {
                   <div className="fixed inset-0 z-40" onClick={() => setProfileMenuOpen(false)} />
                   <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl py-2 z-50 animate-fade-in">
                     <div className="px-4 py-2 border-b border-gray-50 mb-1">
-                      <p className="text-xs text-cc-muted font-semibold uppercase tracking-wider">Account</p>
+                      <p className="text-xs text-cc-muted font-semibold uppercase tracking-wider">{t('studentNav.account')}</p>
                     </div>
                     <Link
                       to="/app/profile"
                       onClick={() => setProfileMenuOpen(false)}
                       className="flex items-center gap-2 px-4 py-2 text-sm text-cc-forest font-medium hover:bg-cc-mint-soft transition"
                     >
-                      <User className="w-4 h-4 text-cc-muted" /> Profile & Settings
+                      <User className="w-4 h-4 text-cc-muted" /> {t('studentNav.profile')}
                     </Link>
                     <button
                       onClick={() => { setProfileMenuOpen(false); logout(); }}
                       className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-500 font-medium hover:bg-red-50 transition"
                     >
-                      <LogOut className="w-4 h-4" /> Logout
+                      <LogOut className="w-4 h-4" /> {t('studentNav.logout')}
                     </button>
                   </div>
                 </>
@@ -333,7 +356,7 @@ export function StudentLayout() {
           <div className="lg:hidden bg-cc-forest p-4 space-y-1 animate-fade-in">
             <NavItems />
             <button type="button" onClick={logout} className="w-full text-left flex items-center gap-2 px-3 py-2.5 text-sm text-white/70">
-              <LogOut className="w-4 h-4" /> Logout
+              <LogOut className="w-4 h-4" /> {t('studentNav.logout')}
             </button>
           </div>
         )}
@@ -342,6 +365,7 @@ export function StudentLayout() {
           <Outlet />
         </main>
       </div>
+      <FaqChatbot />
       <Toast />
     </div>
   );

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Eye, EyeOff, KeyRound, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Logo } from '../../components/Logo';
 import { Button } from '../../components/Button';
@@ -11,11 +11,25 @@ export default function Login() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { setRole, setProfile, showToast } = useApp();
+  const [step, setStep] = useState('credentials'); // 'credentials' | 'otp'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [otp, setOtp] = useState('');
+  const [pendingToken, setPendingToken] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const [error, setError] = useState('');
+
+  const finishLogin = async (message) => {
+    const profileRes = await api.get('/api/users/profile');
+    if (profileRes.data.success) {
+      setProfile(profileRes.data.data);
+      setRole(profileRes.data.data.role);
+      showToast(message || t('auth.loginSuccess'), 'success');
+      navigate('/app');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,18 +39,63 @@ export default function Login() {
     try {
       const res = await api.post('/api/auth/login', { email, password });
       if (res.data.success) {
-        const profileRes = await api.get('/api/users/profile');
-        if (profileRes.data.success) {
-          setProfile(profileRes.data.data);
-          setRole(profileRes.data.data.role);
-          showToast(res.data.message || 'Logged in successfully', 'success');
-          navigate('/app');
+        if (res.data.data?.requires2FA) {
+          setPendingToken(res.data.data.pendingToken || '');
+          setEmail(res.data.data.email || email);
+          setOtp('');
+          setStep('otp');
+          showToast(t('auth.otpSent'), 'success');
+        } else {
+          await finishLogin(res.data.message);
         }
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed');
+      setError(err.response?.data?.error || t('auth.loginFailed'));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    if (!otp || otp.trim().length !== 6) {
+      setError(t('auth.otpInvalid'));
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const res = await api.post('/api/auth/verify-login-otp', {
+        email: email.trim(),
+        otp: otp.trim(),
+        pendingToken
+      });
+      if (res.data.success) {
+        await finishLogin(res.data.message);
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || t('auth.otpFailed'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setResending(true);
+    setError('');
+    try {
+      const res = await api.post('/api/auth/resend-login-otp', {
+        email: email.trim(),
+        pendingToken
+      });
+      if (res.data.success) {
+        if (res.data.data?.pendingToken) setPendingToken(res.data.data.pendingToken);
+        showToast(t('auth.otpResent'), 'success');
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || t('auth.otpResendFailed'));
+    } finally {
+      setResending(false);
     }
   };
 
@@ -45,64 +104,120 @@ export default function Login() {
       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-gray-100 p-8">
         <div className="text-center mb-8">
           <Logo className="justify-center mb-4" />
-          <h1 className="text-2xl font-extrabold text-cc-forest">{t('auth.loginTitle')}</h1>
-          <p className="text-sm text-cc-muted mt-1">{t('auth.loginSub')}</p>
+          <h1 className="text-2xl font-extrabold text-cc-forest">
+            {step === 'otp' ? t('auth.otpTitle') : t('auth.loginTitle')}
+          </h1>
+          <p className="text-sm text-cc-muted mt-1">
+            {step === 'otp' ? t('auth.otpSub', { email }) : t('auth.loginSub')}
+          </p>
         </div>
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm text-center">
             {error}
           </div>
         )}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="text-xs font-semibold text-cc-muted uppercase tracking-wide">{t('auth.email')}</label>
-            <div className="mt-1.5 relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cc-muted" />
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-cc-lime focus:ring-2 focus:ring-cc-lime/20 outline-none text-sm"
-              />
+
+        {step === 'credentials' ? (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="text-xs font-semibold text-cc-muted uppercase tracking-wide">{t('auth.email')}</label>
+              <div className="mt-1.5 relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cc-muted" />
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-cc-lime focus:ring-2 focus:ring-cc-lime/20 outline-none text-sm"
+                />
+              </div>
             </div>
-          </div>
-          <div>
-            <label className="text-xs font-semibold text-cc-muted uppercase tracking-wide">{t('auth.password')}</label>
-            <div className="mt-1.5 relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cc-muted" />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-11 py-3 rounded-xl border border-gray-200 focus:border-cc-lime focus:ring-2 focus:ring-cc-lime/20 outline-none text-sm"
-              />
+            <div>
+              <label className="text-xs font-semibold text-cc-muted uppercase tracking-wide">{t('auth.password')}</label>
+              <div className="mt-1.5 relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cc-muted" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-10 pr-11 py-3 rounded-xl border border-gray-200 focus:border-cc-lime focus:ring-2 focus:ring-cc-lime/20 outline-none text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-cc-muted hover:text-cc-forest transition"
+                  aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <Link to="/forgot-password" className="text-xs font-semibold text-cc-lime hover:underline">
+                {t('auth.forgot')}
+              </Link>
+            </div>
+            <Button type="submit" disabled={loading} className="w-full !rounded-xl !py-3">
+              {loading ? t('auth.signingIn') : <><span className="mr-2">{t('auth.signIn')}</span> <ArrowRight className="w-4 h-4" /></>}
+            </Button>
+          </form>
+        ) : (
+          <form onSubmit={handleVerifyOtp} className="space-y-4">
+            <div>
+              <label className="text-xs font-semibold text-cc-muted uppercase tracking-wide">{t('auth.otpCode')}</label>
+              <div className="mt-1.5 relative">
+                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cc-muted" />
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={6}
+                  required
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="000000"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-cc-lime focus:ring-2 focus:ring-cc-lime/20 outline-none text-sm tracking-[0.35em] font-bold text-center"
+                />
+              </div>
+            </div>
+            <Button type="submit" disabled={loading} className="w-full !rounded-xl !py-3">
+              {loading ? t('auth.verifying') : t('auth.verifyOtp')}
+            </Button>
+            <div className="flex items-center justify-between text-xs">
               <button
                 type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-cc-muted hover:text-cc-forest transition"
-                aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+                onClick={() => {
+                  setStep('credentials');
+                  setOtp('');
+                  setPendingToken('');
+                  setError('');
+                }}
+                className="font-semibold text-cc-muted hover:text-cc-forest"
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {t('auth.backToLogin')}
+              </button>
+              <button
+                type="button"
+                disabled={resending}
+                onClick={handleResendOtp}
+                className="inline-flex items-center gap-1 font-semibold text-cc-lime hover:underline disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${resending ? 'animate-spin' : ''}`} />
+                {resending ? t('auth.resending') : t('auth.resendOtp')}
               </button>
             </div>
-          </div>
-          <div className="flex justify-end">
-            <Link to="/forgot-password" className="text-xs font-semibold text-cc-lime hover:underline">
-              {t('auth.forgot')}
+          </form>
+        )}
+
+        {step === 'credentials' && (
+          <p className="text-center text-sm text-cc-muted mt-6">
+            {t('auth.noAccount')}{' '}
+            <Link to="/register" className="font-semibold text-cc-forest hover:text-cc-lime">
+              {t('nav.signUp')}
             </Link>
-          </div>
-          <Button type="submit" disabled={loading} className="w-full !rounded-xl !py-3">
-            {loading ? t('auth.signingIn') : <><span className="mr-2">{t('auth.signIn')}</span> <ArrowRight className="w-4 h-4" /></>}
-          </Button>
-        </form>
-        <p className="text-center text-sm text-cc-muted mt-6">
-          {t('auth.noAccount')}{' '}
-          <Link to="/register" className="font-semibold text-cc-forest hover:text-cc-lime">
-            {t('nav.signUp')}
-          </Link>
-        </p>
+          </p>
+        )}
       </div>
     </div>
   );

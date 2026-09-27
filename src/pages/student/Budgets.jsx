@@ -68,10 +68,10 @@ export default function Budgets() {
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 space-y-2">
           <div className="flex items-center justify-between mb-1">
             <p className="text-xs font-bold text-amber-800 flex items-center gap-1.5">
-              <Bell className="w-4 h-4" /> Budget Notifications
+              <Bell className="w-4 h-4" /> {t('app.budgets.notifications')}
               {unreadCount > 0 && (
                 <span className="bg-amber-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                  {unreadCount} new
+                  {t('app.budgets.newCount', { count: unreadCount })}
                 </span>
               )}
             </p>
@@ -92,7 +92,7 @@ export default function Budgets() {
                   type="button"
                   onClick={() => markNotificationRead(n._id || n.id)}
                   className="shrink-0 text-amber-600 hover:text-amber-800"
-                  title="Mark as read"
+                  title={t('app.budgets.markRead')}
                 >
                   <CheckCheck className="w-4 h-4" />
                 </button>
@@ -108,14 +108,14 @@ export default function Budgets() {
         className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-wrap gap-4 items-end"
       >
         <div className="flex-1 min-w-[160px]">
-          <label className="text-xs font-semibold text-cc-muted uppercase">Category</label>
+          <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.transactions.category')}</label>
           <select
             required
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
             className="mt-1 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-cc-lime"
           >
-            <option value="">Select...</option>
+            <option value="">{t('app.transactions.select')}</option>
             {expenseCats.map((c) => (
               <option key={c._id || c.id} value={c._id || c.id}>
                 {c.name}
@@ -124,7 +124,7 @@ export default function Budgets() {
           </select>
         </div>
         <div className="w-36">
-          <label className="text-xs font-semibold text-cc-muted uppercase">Monthly Limit (PKR)</label>
+          <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.budgets.limitPkr')}</label>
           <input
             type="number"
             step="0.01"
@@ -136,7 +136,7 @@ export default function Budgets() {
           />
         </div>
         <Button type="submit" disabled={submitting} className="!rounded-xl">
-          <Plus className="w-4 h-4" /> {submitting ? 'Saving...' : 'Save Budget'}
+          <Plus className="w-4 h-4" /> {submitting ? t('app.budgets.saving') : t('app.budgets.saveBudget')}
         </Button>
       </form>
 
@@ -144,7 +144,7 @@ export default function Budgets() {
       <div className="space-y-4">
         {budgets.length === 0 ? (
           <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-8 text-center text-sm text-cc-muted">
-            No budgets yet. Set a monthly spending limit above!
+            {t('app.budgets.noBudgetsHint')}
           </div>
         ) : (
           budgets.map((b) => {
@@ -182,7 +182,7 @@ export default function Budgets() {
                           }`}
                         >
                           <Bell className="w-3.5 h-3.5" />
-                          {over ? 'Over budget' : `Near limit (${pct}%)`}
+                          {over ? t('app.budgets.overBudget') : t('app.budgets.nearLimit', { pct })}
                         </span>
                       )}
                     </div>
@@ -190,7 +190,7 @@ export default function Budgets() {
                       type="button"
                       onClick={() => deleteBudget(getId(b))}
                       className="p-1.5 text-cc-muted hover:text-red-500 transition"
-                      title="Remove budget"
+                      title={t('app.budgets.removeBudget')}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -204,7 +204,7 @@ export default function Budgets() {
                     style={{ width: `${pct}%` }}
                   />
                 </div>
-                <p className="text-xs text-cc-muted mt-2">{pct}% consumed</p>
+                <p className="text-xs text-cc-muted mt-2">{t('app.budgets.consumed', { pct })}</p>
               </div>
             );
           })

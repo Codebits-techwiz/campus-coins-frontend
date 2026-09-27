@@ -1,17 +1,40 @@
+import { useEffect, useState } from 'react';
 import { Users, ArrowLeftRight, Tags, Activity } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useApp } from '../../context/AppContext';
+import api from '../../api';
 
 export default function AdminDashboard() {
-  const { users, transactions, categories, announcements } = useApp();
-  const activeUsers = users.filter((u) => u.status === 'active').length;
+  const [stats, setStats] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [statsRes, usersRes] = await Promise.all([
+          api.get('/api/admin/stats'),
+          api.get('/api/admin/users'),
+        ]);
+        if (statsRes.data.success) setStats(statsRes.data.data);
+        if (usersRes.data.success) setUsers(usersRes.data.data || []);
+      } catch (err) {
+        console.error('Failed to load admin dashboard', err);
+      }
+      setLoading(false);
+    };
+    load();
+  }, []);
 
   const cards = [
-    { label: 'Active Users', value: activeUsers, icon: Users, to: '/admin/users', color: 'bg-cc-mint text-cc-lime' },
-    { label: 'Total Transactions', value: transactions.length + 180, icon: ArrowLeftRight, to: '/admin/stats', color: 'bg-blue-50 text-blue-600' },
-    { label: 'Categories', value: categories.filter((c) => c.isDefault).length, icon: Tags, to: '/admin/categories', color: 'bg-amber-50 text-amber-600' },
-    { label: 'Active Announcements', value: announcements.filter((a) => a.active).length, icon: Activity, to: '/admin/announcements', color: 'bg-purple-50 text-purple-600' },
+    { label: 'Active Users', value: stats?.activeUsers ?? '—', icon: Users, to: '/admin/users', color: 'bg-cc-mint text-cc-lime' },
+    { label: 'Total Transactions', value: stats?.totalTransactions ?? '—', icon: ArrowLeftRight, to: '/admin/stats', color: 'bg-blue-50 text-blue-600' },
+    { label: 'Categories', value: stats?.defaultCategories ?? '—', icon: Tags, to: '/admin/categories', color: 'bg-amber-50 text-amber-600' },
+    { label: 'Active Announcements', value: stats?.activeAnnouncements ?? '—', icon: Activity, to: '/admin/announcements', color: 'bg-purple-50 text-purple-600' },
   ];
+
+  if (loading) {
+    return <div className="text-center py-10 text-cc-muted">Loading dashboard...</div>;
+  }
 
   return (
     <div className="animate-fade-in space-y-6 max-w-5xl">
@@ -49,21 +72,28 @@ export default function AdminDashboard() {
             </thead>
             <tbody>
               {users.slice(0, 4).map((u) => (
-                <tr key={u.id} className="border-b border-gray-50">
+                <tr key={u._id || u.id} className="border-b border-gray-50">
                   <td className="py-2.5 font-medium">{u.name}</td>
                   <td className="py-2.5 text-cc-muted">{u.email}</td>
                   <td className="py-2.5">
                     <span
                       className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
-                        u.status === 'active' ? 'bg-cc-mint text-cc-lime-dark' : 'bg-red-50 text-red-600'
+                        u.isActive !== false ? 'bg-cc-mint text-cc-lime-dark' : 'bg-red-50 text-red-600'
                       }`}
                     >
-                      {u.status}
+                      {u.isActive !== false ? 'active' : 'disabled'}
                     </span>
                   </td>
-                  <td className="py-2.5 text-cc-muted">{u.joined}</td>
+                  <td className="py-2.5 text-cc-muted">
+                    {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
+                  </td>
                 </tr>
               ))}
+              {users.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="py-6 text-center text-cc-muted">No users found</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

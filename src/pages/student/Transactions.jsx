@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Plus, Pencil, Trash2, Sparkles, X, Search, FileUp, UploadCloud, Camera, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Pencil, Trash2, Sparkles, X, Search, FileUp, UploadCloud, Camera, Eye, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
 import api from '../../api';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../../components/Button';
@@ -18,6 +19,7 @@ const empty = {
 
 export default function Transactions() {
   const { t } = useTranslation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const {
     transactions,
     categories,
@@ -52,6 +54,19 @@ export default function Transactions() {
   const [csvError, setCsvError] = useState('');
 
   const [ocrUploading, setOcrUploading] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get('import') === 'csv') {
+      setShowCsvForm(true);
+      setShowForm(false);
+      setCsvPreview(null);
+      setCsvFile(null);
+      setCsvError('');
+      const next = new URLSearchParams(searchParams);
+      next.delete('import');
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
   const getId = (t) => t._id || t.id;
   const getCatId = (t) => t.category?._id || t.category;
   const getCatName = (t) => t.category?.name || t.category || '-';
@@ -324,7 +339,7 @@ export default function Transactions() {
           <div>
             <input type="file" accept="image/*" capture="environment" onChange={handleReceiptScan} className="hidden" id="receipt-upload" />
             <label htmlFor="receipt-upload" className={`cursor-pointer inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold border-2 border-cc-forest/20 text-cc-forest hover:border-cc-lime hover:text-cc-lime transition ${ocrUploading ? 'opacity-50 pointer-events-none' : ''}`}>
-              <Camera className="w-4 h-4" /> {ocrUploading ? 'Scanning...' : 'Scan Receipt'}
+              <Camera className="w-4 h-4" /> {ocrUploading ? t('app.transactions.scanning') : t('app.transactions.scanReceipt')}
             </label>
           </div>
           <Button variant="outline" onClick={() => { setShowCsvForm(true); setShowForm(false); setCsvPreview(null); setCsvFile(null); setCsvError(''); }} className="!rounded-xl border-2">
@@ -340,35 +355,35 @@ export default function Transactions() {
       {templates.length > 0 && (
         <div className="space-y-1.5">
           <p className="text-[11px] font-extrabold text-cc-forest uppercase tracking-wider flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-cc-lime shrink-0" /> Quick Saved Templates (Click to Auto-fill)
+            <Sparkles className="w-3.5 h-3.5 text-cc-lime shrink-0" /> {t('app.transactions.quickTemplates')}
           </p>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            {templates.map((t) => (
-              <div key={getId(t)} className="relative group shrink-0">
+            {templates.map((tx) => (
+              <div key={getId(tx)} className="relative group shrink-0">
                 <button
                   type="button"
-                  onClick={() => useTemplate(t)}
+                  onClick={() => useTemplate(tx)}
                   className="flex items-center gap-2 px-3.5 py-1.5 bg-white border border-gray-200 rounded-xl shadow-sm text-xs font-bold text-cc-forest hover:border-cc-lime hover:bg-cc-mint-soft transition whitespace-nowrap pr-8"
                 >
-                  <CategoryIcon iconKey={t.category?.icon} color={t.category?.color} className="w-3.5 h-3.5 shrink-0" />
-                  <span>{t.name}</span>
-                  <span className="text-cc-muted font-semibold">{formatPkr(Number(t.amount))}</span>
+                  <CategoryIcon iconKey={tx.category?.icon} color={tx.category?.color} className="w-3.5 h-3.5 shrink-0" />
+                  <span>{tx.name}</span>
+                  <span className="text-cc-muted font-semibold">{formatPkr(Number(tx.amount))}</span>
                 </button>
                 <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition bg-white/90 px-1 rounded-lg">
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setEditingTemplate(getId(t));
+                      setEditingTemplate(getId(tx));
                       setTemplateForm({
-                        name: t.name,
-                        amount: String(t.amount),
-                        type: t.type,
-                        category: getCatId(t) || '',
+                        name: tx.name,
+                        amount: String(tx.amount),
+                        type: tx.type,
+                        category: getCatId(tx) || '',
                       });
                     }}
                     className="p-1 hover:bg-cc-mint hover:text-cc-forest rounded-md text-cc-muted transition"
-                    title="Edit Template"
+                    title={t('app.transactions.editTemplate')}
                   >
                     <Pencil className="w-3 h-3" />
                   </button>
@@ -377,15 +392,15 @@ export default function Transactions() {
                     onClick={async (e) => {
                       e.stopPropagation();
                       try {
-                        await api.delete(`/api/templates/${getId(t)}`);
-                        setTemplates((prev) => prev.filter((x) => getId(x) !== getId(t)));
+                        await api.delete(`/api/templates/${getId(tx)}`);
+                        setTemplates((prev) => prev.filter((x) => getId(x) !== getId(tx)));
                         showToast('Template deleted', 'success');
                       } catch (err) {
                         showToast('Failed to delete template', 'error');
                       }
                     }}
                     className="p-1 hover:bg-red-100 hover:text-red-600 rounded-md text-cc-muted transition"
-                    title="Delete Template"
+                    title={t('app.transactions.delete')}
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -404,13 +419,13 @@ export default function Transactions() {
               key={f}
               type="button"
               onClick={() => setFilter(f)}
-              className={`px-4 py-2 rounded-xl text-xs font-extrabold capitalize transition ${
+              className={`px-4 py-2 rounded-xl text-xs font-extrabold transition ${
                 filter === f
                   ? 'bg-cc-forest text-white shadow-sm ring-2 ring-cc-lime/30'
                   : 'bg-gray-50 text-cc-muted hover:bg-gray-100 hover:text-cc-forest border border-gray-200/60'
               }`}
             >
-              {f}
+              {t(`app.transactions.${f}`)}
             </button>
           ))}
         </div>
@@ -421,7 +436,7 @@ export default function Transactions() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by description or category..."
+            placeholder={t('app.transactions.searchPlaceholder')}
             className="w-full pl-9 pr-8 py-2 rounded-xl border border-gray-200 text-xs font-medium outline-none focus:border-cc-lime focus:ring-2 focus:ring-cc-lime/20 bg-gray-50/50 transition"
           />
           {search && (
@@ -439,15 +454,15 @@ export default function Transactions() {
       {/* Transactions Table & Pagination */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mt-4 mb-8">
         {filtered.length === 0 ? (
-          <div className="p-12 text-center space-y-2">
+          <div className="p-12 text-center space-y-2" dir="auto">
             <Search className="w-8 h-8 text-cc-muted mx-auto opacity-30" />
             <p className="text-sm font-bold text-cc-forest">
-              {transactions.length === 0 ? 'No transactions logged yet.' : 'No matching transactions found.'}
+              {transactions.length === 0 ? t('app.transactions.noTransactionsYet') : t('app.transactions.noMatching')}
             </p>
             <p className="text-xs text-cc-muted">
               {transactions.length === 0
-                ? 'Click "+ Add Transaction" above to log your first income or expense.'
-                : 'Try clearing your search query or changing filters.'}
+                ? t('app.transactions.noTransactionsHint')
+                : t('app.transactions.noMatchingHint')}
             </p>
           </div>
         ) : (
@@ -456,59 +471,72 @@ export default function Transactions() {
               <table className="w-full text-sm">
                 <thead className="bg-cc-mint-soft border-b border-gray-100">
                   <tr className="text-left text-xs font-bold text-cc-forest uppercase tracking-wider">
-                    <th className="px-4 py-3.5">Date</th>
-                    <th className="px-4 py-3.5">Description</th>
-                    <th className="px-4 py-3.5">Category</th>
-                    <th className="px-4 py-3.5">Type</th>
-                    <th className="px-4 py-3.5 text-right">Amount</th>
-                    <th className="px-4 py-3.5 text-right">Actions</th>
+                    <th className="px-4 py-3.5">{t('app.transactions.date')}</th>
+                    <th className="px-4 py-3.5">{t('app.transactions.description')}</th>
+                    <th className="px-4 py-3.5">{t('app.transactions.category')}</th>
+                    <th className="px-4 py-3.5">{t('app.transactions.type')}</th>
+                    <th className="px-4 py-3.5 text-right">{t('app.transactions.amount')}</th>
+                    <th className="px-4 py-3.5 text-right">{t('app.transactions.actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {paginated.map((t) => (
-                    <tr key={getId(t)} className="hover:bg-cc-mint-soft/40 transition">
+                  {paginated.map((tx) => (
+                    <tr key={getId(tx)} className="hover:bg-cc-mint-soft/40 transition">
                       <td className="px-4 py-3.5 text-xs font-medium text-cc-muted whitespace-nowrap">
-                        {t.date ? new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                        {tx.date ? new Date(tx.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
                       </td>
-                      <td className="px-4 py-3.5 font-bold text-cc-forest">{t.description}</td>
+                      <td className="px-4 py-3.5 font-bold text-cc-forest">
+                        <span className="inline-flex items-center gap-1.5">
+                          {tx.description}
+                          {tx.isFlagged && (
+                            <span
+                              className="inline-flex items-center gap-1 text-[10px] font-bold uppercase text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full"
+                              title={tx.flagReason || t('app.transactions.flagged')}
+                            >
+                              <AlertTriangle className="w-3 h-3" />
+                              {t('app.transactions.flagged')}
+                            </span>
+                          )}
+                        </span>
+                      </td>
                       <td className="px-4 py-3.5">
                         <span
                           className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full"
                           style={{
-                            backgroundColor: t.category?.color ? `${t.category.color}15` : '#f0fdf4',
-                            color: t.category?.color || '#166534',
+                            backgroundColor: tx.category?.color ? `${tx.category.color}15` : '#f0fdf4',
+                            color: tx.category?.color || '#166534',
                           }}
                         >
-                          <CategoryIcon iconKey={t.category?.icon} color={t.category?.color || '#166534'} className="w-3.5 h-3.5" />
-                          {getCatName(t)}
+                          <CategoryIcon iconKey={tx.category?.icon} color={tx.category?.color || '#166534'} className="w-3.5 h-3.5" />
+                          {getCatName(tx)}
                         </span>
                       </td>
-                      <td className="px-4 py-3.5 capitalize text-xs font-bold text-cc-muted">{t.type}</td>
-                      <td className={`px-4 py-3.5 text-right font-extrabold ${t.type === 'income' ? 'text-cc-lime' : 'text-red-500'}`}>
-                        {t.type === 'income' ? '+' : '-'}{formatMoney(Number(t.amount), profile?.currency)}
+                      <td className="px-4 py-3.5 text-xs font-bold text-cc-muted">{t(`app.transactions.${tx.type}`)}</td>
+                      <td className={`px-4 py-3.5 text-right font-extrabold ${tx.type === 'income' ? 'text-cc-lime' : 'text-red-500'}`}>
+                        {tx.type === 'income' ? '+' : '-'}{formatMoney(Number(tx.amount), profile?.currency)}
                       </td>
                       <td className="px-4 py-3.5 text-right whitespace-nowrap">
                         <button
                           type="button"
-                          onClick={() => openView(t)}
+                          onClick={() => openView(tx)}
                           className="p-1.5 rounded-lg text-cc-muted hover:text-cc-forest hover:bg-gray-100 transition"
-                          title="View Details"
+                          title={t('app.transactions.viewDetails')}
                         >
                           <Eye className="w-4 h-4" />
                         </button>
                         <button
                           type="button"
-                          onClick={() => openEdit(t)}
+                          onClick={() => openEdit(tx)}
                           className="p-1.5 rounded-lg text-cc-muted hover:text-cc-lime hover:bg-cc-mint transition"
-                          title="Edit Transaction"
+                          title={t('app.transactions.editTransaction')}
                         >
                           <Pencil className="w-4 h-4" />
                         </button>
                         <button
                           type="button"
-                          onClick={() => deleteTransaction(getId(t))}
+                          onClick={() => deleteTransaction(getId(tx))}
                           className="p-1.5 rounded-lg text-cc-muted hover:text-red-600 hover:bg-red-50 transition"
-                          title="Delete Transaction"
+                          title={t('app.transactions.deleteTransaction')}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -523,13 +551,13 @@ export default function Transactions() {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t border-gray-100 bg-gray-50/60">
               <div className="flex flex-wrap items-center gap-3 text-xs text-cc-muted font-medium">
                 <span>
-                  Showing <strong className="text-cc-forest">{(page - 1) * itemsPerPage + 1}</strong> to{' '}
-                  <strong className="text-cc-forest">{Math.min(page * itemsPerPage, filtered.length)}</strong> of{' '}
-                  <strong className="text-cc-forest">{filtered.length}</strong> transactions
+                  {t('app.transactions.showing')} <strong className="text-cc-forest">{(page - 1) * itemsPerPage + 1}</strong> {t('app.transactions.to')}{' '}
+                  <strong className="text-cc-forest">{Math.min(page * itemsPerPage, filtered.length)}</strong> {t('app.transactions.of')}{' '}
+                  <strong className="text-cc-forest">{filtered.length}</strong> {t('app.transactions.transactionsCount')}
                 </span>
 
                 <div className="flex items-center gap-1.5 border-l border-gray-300 pl-3">
-                  <span>Show:</span>
+                  <span>{t('app.transactions.show')}</span>
                   <select
                     value={itemsPerPage}
                     onChange={(e) => {
@@ -538,10 +566,10 @@ export default function Transactions() {
                     }}
                     className="bg-white border border-gray-200 rounded-lg px-2 py-1 text-xs font-bold text-cc-forest outline-none focus:border-cc-lime cursor-pointer shadow-sm"
                   >
-                    <option value={5}>5 rows</option>
-                    <option value={10}>10 rows</option>
-                    <option value={25}>25 rows</option>
-                    <option value={50}>50 rows</option>
+                    <option value={5}>5 {t('app.transactions.rows')}</option>
+                    <option value={10}>10 {t('app.transactions.rows')}</option>
+                    <option value={25}>25 {t('app.transactions.rows')}</option>
+                    <option value={50}>50 {t('app.transactions.rows')}</option>
                   </select>
                 </div>
               </div>
@@ -553,7 +581,7 @@ export default function Transactions() {
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   className="px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-bold text-cc-forest hover:bg-cc-mint hover:border-cc-lime disabled:opacity-40 disabled:pointer-events-none transition flex items-center gap-1 shadow-sm"
                 >
-                  <ChevronLeft className="w-3.5 h-3.5" /> Prev
+                  <ChevronLeft className="w-3.5 h-3.5" /> {t('app.transactions.prev')}
                 </button>
 
                 <div className="flex items-center gap-1">
@@ -588,7 +616,7 @@ export default function Transactions() {
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   className="px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-bold text-cc-forest hover:bg-cc-mint hover:border-cc-lime disabled:opacity-40 disabled:pointer-events-none transition flex items-center gap-1 shadow-sm"
                 >
-                  Next <ChevronRight className="w-3.5 h-3.5" />
+                  {t('app.transactions.next')} <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
@@ -606,31 +634,31 @@ export default function Transactions() {
             <button type="button" className="absolute right-4 top-4 p-1 text-cc-muted hover:text-red-500 rounded-full hover:bg-red-50 transition" onClick={() => setShowCsvForm(false)}>
               <X className="w-5 h-5" />
             </button>
-          <h2 className="font-bold text-cc-forest mb-4">Import Transactions (CSV)</h2>
+          <h2 className="font-bold text-cc-forest mb-4">{t('app.transactions.importCsvTitle')}</h2>
           
           {csvError && <div className="text-red-500 text-sm mb-4">{csvError}</div>}
           
           {!csvPreview ? (
             <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl p-8">
               <UploadCloud className="w-8 h-8 text-cc-muted mb-2" />
-              <p className="text-sm text-cc-muted mb-4">Select a CSV file to preview and import.</p>
+              <p className="text-sm text-cc-muted mb-4">{t('app.transactions.selectCsv')}</p>
               <input type="file" accept=".csv" onChange={handleCsvSelect} className="hidden" id="csv-upload" />
               <label htmlFor="csv-upload" className="cursor-pointer bg-cc-forest text-white px-4 py-2 rounded-xl text-sm font-bold hover:opacity-90">
-                {csvUploading ? 'Parsing...' : 'Browse File'}
+                {csvUploading ? t('app.transactions.parsing') : t('app.transactions.browseFile')}
               </label>
             </div>
           ) : (
             <div className="space-y-4">
-              <p className="text-sm font-semibold text-cc-forest">Review & Confirm {csvPreview.length} rows:</p>
+              <p className="text-sm font-semibold text-cc-forest">{t('app.transactions.reviewConfirm', { count: csvPreview.length })}</p>
               <div className="max-h-[500px] overflow-y-auto border border-gray-100 rounded-xl">
                 <table className="w-full text-sm">
                   <thead className="bg-cc-mint-soft sticky top-0 shadow-sm">
                     <tr className="text-left text-xs text-cc-muted">
-                      <th className="px-3 py-2 font-semibold">Date</th>
-                      <th className="px-3 py-2 font-semibold">Description</th>
-                      <th className="px-3 py-2 font-semibold">Amount</th>
-                      <th className="px-3 py-2 font-semibold">Type</th>
-                      <th className="px-3 py-2 font-semibold">Category</th>
+                      <th className="px-3 py-2 font-semibold">{t('app.transactions.date')}</th>
+                      <th className="px-3 py-2 font-semibold">{t('app.transactions.description')}</th>
+                      <th className="px-3 py-2 font-semibold">{t('app.transactions.amount')}</th>
+                      <th className="px-3 py-2 font-semibold">{t('app.transactions.type')}</th>
+                      <th className="px-3 py-2 font-semibold">{t('app.transactions.category')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -647,13 +675,13 @@ export default function Transactions() {
                         </td>
                         <td className="px-3 py-2">
                           <select value={row.type || 'expense'} onChange={(e) => updateCsvRow(i, 'type', e.target.value)} className="w-full bg-transparent outline-none text-xs">
-                            <option value="expense">Expense</option>
-                            <option value="income">Income</option>
+                            <option value="expense">{t('app.transactions.expense')}</option>
+                            <option value="income">{t('app.transactions.income')}</option>
                           </select>
                         </td>
                         <td className="px-3 py-2">
                           <select value={row.categoryId || row.aiSuggestedCategory || ''} onChange={(e) => updateCsvRow(i, 'categoryId', e.target.value)} className="w-full bg-transparent outline-none text-xs border rounded px-1 border-cc-mint text-cc-forest">
-                            <option value="">Select...</option>
+                            <option value="">{t('app.transactions.select')}</option>
                             {categories.filter(c => c.type === (row.type || 'expense')).map(c => (
                               <option key={c._id || c.id} value={c._id || c.id}>{c.name}</option>
                             ))}
@@ -665,9 +693,9 @@ export default function Transactions() {
                 </table>
               </div>
               <div className="flex justify-end gap-2 pt-2">
-                <Button onClick={() => setCsvPreview(null)} className="!rounded-xl bg-gray-100 !text-gray-600 hover:bg-gray-200">Cancel</Button>
-                <Button onClick={submitCsvConfirm} disabled={csvUploading} className="!rounded-xl">
-                  {csvUploading ? 'Importing...' : 'Confirm Import'}
+                <Button onClick={() => setCsvPreview(null)} className="!rounded-xl bg-gray-100 !text-gray-600 hover:bg-gray-200">{t('app.transactions.cancel')}</Button>
+                <Button onClick={confirmCsvImport} disabled={csvUploading} className="!rounded-xl">
+                  {csvUploading ? t('app.transactions.importing') : t('app.transactions.confirmImport')}
                 </Button>
               </div>
             </div>
@@ -683,10 +711,10 @@ export default function Transactions() {
             <button type="button" className="absolute right-4 top-4 p-1 text-cc-muted hover:text-red-500 rounded-full hover:bg-red-50 transition" onClick={() => setEditingTemplate(null)}>
               <X className="w-5 h-5" />
             </button>
-            <h2 className="font-bold text-cc-forest mb-4">Edit Template</h2>
+            <h2 className="font-bold text-cc-forest mb-4">{t('app.transactions.editTemplate')}</h2>
             <form onSubmit={handleTemplateEditSubmit} className="space-y-4">
               <div>
-                <label className="text-xs font-semibold text-cc-muted uppercase">Template Name</label>
+                <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.transactions.templateName')}</label>
                 <input
                   type="text"
                   required
@@ -696,25 +724,25 @@ export default function Transactions() {
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-cc-muted uppercase">Type</label>
+                <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.transactions.type')}</label>
                 <select
                   value={templateForm.type}
                   onChange={(e) => setTemplateForm({ ...templateForm, type: e.target.value, category: '' })}
                   className="mt-1 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-cc-lime"
                 >
-                  <option value="expense">Expense</option>
-                  <option value="income">Income</option>
+                  <option value="expense">{t('app.transactions.expense')}</option>
+                  <option value="income">{t('app.transactions.income')}</option>
                 </select>
               </div>
               <div>
-                <label className="text-xs font-semibold text-cc-muted uppercase">Category</label>
+                <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.transactions.category')}</label>
                 <select
                   required
                   value={templateForm.category}
                   onChange={(e) => setTemplateForm({ ...templateForm, category: e.target.value })}
                   className="mt-1 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-cc-lime"
                 >
-                  <option value="">Select…</option>
+                  <option value="">{t('app.transactions.select')}</option>
                   {categories.filter(c => c.type === templateForm.type).map((c) => (
                     <option key={c._id || c.id} value={c._id || c.id}>
                       {c.name}
@@ -723,7 +751,7 @@ export default function Transactions() {
                 </select>
               </div>
               <div>
-                <label className="text-xs font-semibold text-cc-muted uppercase">Amount ({profile?.currency || 'USD'})</label>
+                <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.transactions.amount')} ({profile?.currency || 'USD'})</label>
                 <input
                   type="number"
                   step="0.01"
@@ -735,7 +763,7 @@ export default function Transactions() {
                 />
               </div>
               <Button type="submit" disabled={submitting} className="w-full !rounded-xl">
-                {submitting ? 'Saving...' : 'Save Template'}
+                {submitting ? t('app.transactions.saving') : t('app.transactions.saveTemplate')}
               </Button>
             </form>
           </div>
@@ -749,21 +777,21 @@ export default function Transactions() {
             <button type="button" className="absolute right-4 top-4 p-1 text-cc-muted hover:text-red-500 rounded-full hover:bg-red-50 transition" onClick={() => setShowForm(false)}>
               <X className="w-5 h-5" />
             </button>
-          <h2 className="font-bold text-cc-forest mb-4">{editing ? 'Edit' : 'Quick Add'} Transaction</h2>
+          <h2 className="font-bold text-cc-forest mb-4">{editing ? t('app.transactions.editTitle') : t('app.transactions.quickAdd')} {t('app.transactions.transactionWord')}</h2>
           <form onSubmit={handleSubmit} className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-semibold text-cc-muted uppercase">Type</label>
+              <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.transactions.type')}</label>
               <select
                 value={form.type}
                 onChange={(e) => setForm({ ...form, type: e.target.value, categoryId: '' })}
                 className="mt-1 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-cc-lime"
               >
-                <option value="expense">Expense</option>
-                <option value="income">Income</option>
+                <option value="expense">{t('app.transactions.expense')}</option>
+                <option value="income">{t('app.transactions.income')}</option>
               </select>
             </div>
             <div>
-              <label className="text-xs font-semibold text-cc-muted uppercase">Amount (PKR)</label>
+              <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.transactions.amountPkr')}</label>
               <input
                 type="number"
                 step="0.01"
@@ -775,13 +803,13 @@ export default function Transactions() {
               />
             </div>
             <div className="sm:col-span-2">
-              <label className="text-xs font-semibold text-cc-muted uppercase">Description</label>
+              <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.transactions.description')}</label>
               <input
                 type="text"
                 required
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder="e.g. Campus Cafe lunch"
+                placeholder={t('app.transactions.descriptionPlaceholder')}
                 className="mt-1 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-cc-lime"
               />
               {aiHint && aiHint.suggestedCategoryId && form.categoryId !== aiHint.suggestedCategoryId && (
@@ -790,19 +818,19 @@ export default function Transactions() {
                   onClick={applyAi}
                   className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold bg-cc-mint text-cc-forest px-3 py-1.5 rounded-full hover:bg-cc-lime hover:text-white transition"
                 >
-                  <Sparkles className="w-3.5 h-3.5" /> AI suggests: {aiHint.categoryName || aiHint.name} — Apply
+                  <Sparkles className="w-3.5 h-3.5" /> {t('app.transactions.aiSuggests')}: {aiHint.categoryName || aiHint.name} — {t('app.transactions.apply')}
                 </button>
               )}
             </div>
             <div>
-              <label className="text-xs font-semibold text-cc-muted uppercase">Category</label>
+              <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.transactions.category')}</label>
               <select
                 required
                 value={form.categoryId}
                 onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
                 className="mt-1 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-cc-lime"
               >
-                <option value="">Select...</option>
+                <option value="">{t('app.transactions.select')}</option>
                 {typeCats.map((c) => (
                   <option key={c._id || c.id} value={c._id || c.id}>
                     {c.name}
@@ -811,7 +839,7 @@ export default function Transactions() {
               </select>
             </div>
             <div>
-              <label className="text-xs font-semibold text-cc-muted uppercase">Date</label>
+              <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.transactions.date')}</label>
               <input
                 type="date"
                 required
@@ -822,7 +850,7 @@ export default function Transactions() {
             </div>
             <div className="sm:col-span-2 flex flex-wrap gap-3">
               <Button type="submit" disabled={submitting} className="!rounded-xl">
-                {submitting ? 'Saving...' : editing ? 'Save Changes' : 'Add Transaction'}
+                {submitting ? t('app.transactions.saving') : editing ? t('app.transactions.saveChanges') : t('app.transactions.addTransaction')}
               </Button>
               {!editing && (
                 <Button 
@@ -849,7 +877,7 @@ export default function Transactions() {
                   }}
                   className="!rounded-xl"
                 >
-                  Save as Template
+                  {t('app.transactions.saveAsTemplate')}
                 </Button>
               )}
             </div>
@@ -865,38 +893,44 @@ export default function Transactions() {
             <button type="button" className="absolute right-4 top-4 p-1 text-cc-muted hover:text-red-500 rounded-full hover:bg-red-50 transition" onClick={() => setViewing(false)}>
               <X className="w-5 h-5" />
             </button>
-            <h2 className="font-bold text-cc-forest mb-4">Transaction Details</h2>
+            <h2 className="font-bold text-cc-forest mb-4">{t('app.transactions.transactionDetails')}</h2>
             {viewData ? (
               <div className="space-y-4">
                 <div className="flex justify-between pb-3 border-b border-gray-100">
-                  <span className="text-cc-muted text-sm font-semibold">Amount</span>
+                  <span className="text-cc-muted text-sm font-semibold">{t('app.transactions.amount')}</span>
                   <span className={`font-bold ${viewData.type === 'income' ? 'text-cc-lime' : 'text-red-500'}`}>
                     {viewData.type === 'income' ? '+' : '-'}{formatPkr(Number(viewData.amount))}
                   </span>
                 </div>
                 <div className="flex justify-between pb-3 border-b border-gray-100">
-                  <span className="text-cc-muted text-sm font-semibold">Description</span>
+                  <span className="text-cc-muted text-sm font-semibold">{t('app.transactions.description')}</span>
                   <span className="font-medium text-cc-ink text-right">{viewData.description}</span>
                 </div>
                 <div className="flex justify-between pb-3 border-b border-gray-100">
-                  <span className="text-cc-muted text-sm font-semibold">Category</span>
+                  <span className="text-cc-muted text-sm font-semibold">{t('app.transactions.category')}</span>
                   <span className="font-medium text-cc-ink text-right bg-cc-mint px-2 py-0.5 rounded-full text-xs">
                     {getCatName(viewData)}
                   </span>
                 </div>
                 <div className="flex justify-between pb-3 border-b border-gray-100">
-                  <span className="text-cc-muted text-sm font-semibold">Date</span>
+                  <span className="text-cc-muted text-sm font-semibold">{t('app.transactions.date')}</span>
                   <span className="font-medium text-cc-ink text-right">
                     {viewData.date ? new Date(viewData.date).toLocaleDateString() : '—'}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-cc-muted text-sm font-semibold">Type</span>
-                  <span className="font-medium text-cc-ink text-right capitalize">{viewData.type}</span>
+                  <span className="text-cc-muted text-sm font-semibold">{t('app.transactions.type')}</span>
+                  <span className="font-medium text-cc-ink text-right">{t(`app.transactions.${viewData.type}`)}</span>
                 </div>
+                {viewData.isFlagged && (
+                  <div className="mt-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-medium flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>{viewData.flagReason || t('app.transactions.flagged')}</span>
+                  </div>
+                )}
               </div>
             ) : (
-              <p className="text-center text-cc-muted text-sm py-8">Loading details...</p>
+              <p className="text-center text-cc-muted text-sm py-8">{t('app.transactions.loadingDetails')}</p>
             )}
           </div>
         </div>

@@ -25,14 +25,9 @@ export default function AdminStats() {
   if (!stats) return <div className="text-center py-10 text-red-500">Failed to load stats.</div>;
 
   const pieData = stats.topCategories?.map(c => ({ name: c.name, value: c.count })) || [];
-  
-  // Dummy data for weekly active users since it's not provided by the backend API currently
-  const weeklyActive = [
-    { week: 'W1', users: Math.floor(stats.activeUsers * 0.8) },
-    { week: 'W2', users: Math.floor(stats.activeUsers * 0.9) },
-    { week: 'W3', users: Math.floor(stats.activeUsers * 1.1) },
-    { week: 'W4', users: stats.activeUsers },
-  ];
+  const weeklyActive = stats.weeklyActiveUsers?.length
+    ? stats.weeklyActiveUsers
+    : [];
 
   return (
     <div className="animate-fade-in space-y-6 max-w-5xl">

@@ -88,7 +88,7 @@ export default function Bookmarks() {
             const title = isTip ? t('app.insights.pinnedTips') : t('app.insights.title');
             const item = b.ref || (isTip ? b.tip : b.insight);
 
-            let contentText = isTip ? 'This tip is no longer available' : 'This insight is no longer available';
+            let contentText = isTip ? t('app.bookmarks.tipUnavailable') : t('app.bookmarks.insightUnavailable');
             if (item) {
               contentText = item.summaryText || item.text || contentText;
             }
@@ -134,7 +134,7 @@ export default function Bookmarks() {
                         type="text"
                         value={editNote}
                         onChange={(e) => setEditNote(e.target.value)}
-                        placeholder="Note..."
+                        placeholder={t('app.bookmarks.notePlaceholder')}
                         className="flex-1 text-sm border border-gray-200 rounded-lg px-2 py-1 outline-none focus:border-cc-lime"
                         autoFocus
                       />

@@ -57,6 +57,7 @@ const URDU_PHRASES = [
   { match: /Low impact/i, ur: "کم اثر" },
   { match: /^high$/i, ur: "زیادہ" },
   { match: /^medium$/i, ur: "درمیانہ" },
+  { match: /^low$/i, ur: "کم" },
   { match: /^low$/i, ur: "کم" }
 ];
 
