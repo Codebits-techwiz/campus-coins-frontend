@@ -1,10 +1,12 @@
 import { useState, useRef } from 'react';
-import { Upload, Save, Moon, Sun, Type } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Upload, Save, Moon, Sun, Type, KeyRound, Lock } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../../components/Button';
 import api from '../../api';
 
 export default function Profile() {
+  const { t } = useTranslation();
   const { profile, setProfile, importCsv, showToast, darkMode, setDarkMode, fontSize, setFontSize } = useApp();
   const [form, setForm] = useState({ 
     ...profile,
@@ -13,6 +15,13 @@ export default function Profile() {
     currency: profile?.currency || 'PKR'
   });
   const fileRef = useRef(null);
+
+  const [passwords, setPasswords] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [changingPass, setChangingPass] = useState(false);
 
   const save = async (e) => {
     e.preventDefault();
@@ -30,7 +39,40 @@ export default function Profile() {
         showToast('Profile updated', 'success');
       }
     } catch (err) {
-      showToast(err.response?.data?.message || 'Failed to update profile', 'error');
+      showToast(err.response?.data?.error || err.response?.data?.message || 'Failed to update profile', 'error');
+    }
+  };
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    if (!passwords.currentPassword) {
+      showToast('Current password is required', 'error');
+      return;
+    }
+    if (passwords.newPassword.length < 8) {
+      showToast('New password must be at least 8 characters', 'error');
+      return;
+    }
+    if (passwords.newPassword !== passwords.confirmPassword) {
+      showToast('New passwords do not match', 'error');
+      return;
+    }
+
+    setChangingPass(true);
+    try {
+      const res = await api.put('/api/users/change-password', {
+        currentPassword: passwords.currentPassword,
+        newPassword: passwords.newPassword
+      });
+      if (res.data.success) {
+        showToast('Password changed successfully', 'success');
+        setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      }
+    } catch (err) {
+      const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Failed to change password';
+      showToast(errorMsg, 'error');
+    } finally {
+      setChangingPass(false);
     }
   };
 
@@ -45,8 +87,8 @@ export default function Profile() {
   return (
     <div className="animate-fade-in space-y-8 max-w-4xl mx-auto">
       <div>
-        <h1 className="text-2xl font-extrabold text-cc-forest">Profile & Settings</h1>
-        <p className="text-sm text-cc-muted">Academic year, allowance baseline, savings goal, accessibility</p>
+        <h1 className="text-2xl font-extrabold text-cc-forest">{t('app.profile.title')}</h1>
+        <p className="text-sm text-cc-muted">{t('app.profile.subtitle')}</p>
       </div>
 
       <form onSubmit={save} className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm space-y-4">
@@ -112,6 +154,53 @@ export default function Profile() {
         </div>
         <Button type="submit" className="!rounded-xl">
           <Save className="w-4 h-4" /> Save Profile
+        </Button>
+      </form>
+
+      {/* Change Password Card */}
+      <form onSubmit={handlePasswordChange} className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm space-y-4">
+        <h2 className="font-bold text-cc-forest flex items-center gap-2">
+          <KeyRound className="w-5 h-5 text-cc-lime" /> Security - Change Password
+        </h2>
+        <div>
+          <label className="text-xs font-semibold text-cc-muted uppercase">Current Password</label>
+          <input
+            type="password"
+            required
+            placeholder="Enter current password"
+            value={passwords.currentPassword}
+            onChange={(e) => setPasswords({ ...passwords, currentPassword: e.target.value })}
+            className="mt-1 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-cc-lime"
+          />
+        </div>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs font-semibold text-cc-muted uppercase">New Password</label>
+            <input
+              type="password"
+              required
+              minLength={8}
+              placeholder="At least 8 characters"
+              value={passwords.newPassword}
+              onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
+              className="mt-1 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-cc-lime"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-cc-muted uppercase">Confirm New Password</label>
+            <input
+              type="password"
+              required
+              minLength={8}
+              placeholder="Re-enter new password"
+              value={passwords.confirmPassword}
+              onChange={(e) => setPasswords({ ...passwords, confirmPassword: e.target.value })}
+              className="mt-1 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-cc-lime"
+            />
+          </div>
+        </div>
+        <Button type="submit" disabled={changingPass} className="!rounded-xl">
+          <Lock className="w-4 h-4" /> {changingPass ? 'Updating...' : 'Update Password'}
         </Button>
       </form>
 

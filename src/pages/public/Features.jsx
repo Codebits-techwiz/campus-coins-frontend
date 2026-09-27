@@ -45,15 +45,16 @@ const iconMap = {
 
 export default function Features() {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { siteContent } = useApp();
+  const isUr = i18n.language === 'ur';
 
   const dynamicItems = siteContent?.features?.items;
-  const itemsToRender = (dynamicItems && dynamicItems.length > 0) ? dynamicItems : defaultFeatures;
+  const itemsToRender = (!isUr && dynamicItems && dynamicItems.length > 0) ? dynamicItems : defaultFeatures;
 
-  const eyebrow = siteContent?.features?.badge || t('features.eyebrow');
-  const heroTitle = siteContent?.features?.title || t('features.title');
-  const heroSubtitle = siteContent?.features?.subtitle || t('features.subtitle');
+  const eyebrow = isUr ? t('features.eyebrow') : (siteContent?.features?.badge || t('features.eyebrow'));
+  const heroTitle = isUr ? t('features.title') : (siteContent?.features?.title || t('features.title'));
+  const heroSubtitle = isUr ? t('features.subtitle') : (siteContent?.features?.subtitle || t('features.subtitle'));
 
   return (
     <div className="animate-fade-in min-h-[70vh]">

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Target, Bell, Plus, Trash2, CheckCheck } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../../components/Button';
@@ -6,6 +7,7 @@ import { formatPkr } from '../../utils/currency';
 import { CategoryIcon } from '../../utils/categoryIcons';
 
 export default function Budgets() {
+  const { t } = useTranslation();
   const {
     budgets,
     addBudget,
@@ -54,10 +56,10 @@ export default function Budgets() {
     <div className="animate-fade-in space-y-6 max-w-4xl">
       <div>
         <h1 className="text-2xl font-extrabold text-cc-forest flex items-center gap-2">
-          <Target className="w-7 h-7 text-cc-lime" /> Budget Goals &amp; Alerts
+          <Target className="w-7 h-7 text-cc-lime" /> {t('app.budgets.title')}
         </h1>
         <p className="text-sm text-cc-muted mt-1">
-          Set monthly caps per category and watch real-time progress
+          {t('app.budgets.subtitle')}
         </p>
       </div>
 

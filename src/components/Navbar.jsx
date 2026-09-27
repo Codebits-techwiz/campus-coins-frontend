@@ -10,6 +10,7 @@ const navLinkDefs = [
   { key: 'home', to: '/' },
   { key: 'features', to: '/features' },
   { key: 'howItWorks', to: '/how-it-works' },
+  { key: 'userGuide', to: '/user-guide' },
   { key: 'testimonials', to: '/testimonials' },
   { key: 'sitemap', to: '/sitemap' },
 ];

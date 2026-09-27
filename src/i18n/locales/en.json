@@ -3,6 +3,8 @@
     "home": "Home",
     "features": "Features",
     "howItWorks": "How It Works",
+    "userGuide": "User Guide",
+    "privacyPolicy": "Privacy Policy",
     "pricing": "Pricing",
     "testimonials": "Testimonials",
     "faq": "FAQ",
@@ -216,6 +218,13 @@
       "number": "One number (0–9)",
       "special": "One special character (!@#$…)"
     },
+    "passwordRulesShort": {
+      "minLength": "8+ chars",
+      "upper": "A-Z",
+      "lower": "a-z",
+      "number": "0-9",
+      "special": "!@#$"
+    },
     "creating": "Creating Account...",
     "haveAccount": "Already have an account?",
     "forgotTitle": "Reset password",
@@ -227,13 +236,16 @@
     "adminSub": "Direct access, separate from student portal",
     "entering": "Entering...",
     "enterPanel": "Enter Control Panel",
+    "agreeTerms": "I have read and agree to the",
+    "privacyPolicy": "Privacy Policy & Terms of Service",
     "errors": {
       "required": "This field is required.",
       "nameInvalid": "Use letters only, with single spaces between names (e.g. Ayesha Khan).",
       "emailInvalid": "Enter a valid email address.",
       "passwordWeak": "Password needs 8+ chars, uppercase, lowercase, a number, and a special character.",
       "passwordMismatch": "Passwords do not match.",
-      "numberInvalid": "Enter a valid non-negative number."
+      "numberInvalid": "Enter a valid non-negative number.",
+      "privacyRequired": "You must accept the Privacy Policy to continue."
     }
   },
   "home": {
@@ -339,5 +351,136 @@
     "campusCafe": "Campus Cafe",
     "foodAiTagged": "Food - AI Auto-tagged",
     "goalMet": "Rs 10,000 Goal - 85% Met"
+  },
+  "studentNav": {
+    "dashboard": "Dashboard",
+    "transactions": "Transactions",
+    "categories": "Categories",
+    "budgets": "Budgets",
+    "recurring": "Recurring",
+    "reports": "Reports",
+    "insights": "Insights & Tips",
+    "bookmarks": "Bookmarks",
+    "profile": "Profile & Settings",
+    "logout": "Logout",
+    "studentPortal": "Student Portal",
+    "announcements": "Campus Announcements",
+    "markRead": "Mark Read",
+    "upToDate": "Up to date",
+    "noAnnouncements": "No announcements right now."
+  },
+  "app": {
+    "dashboard": {
+      "title": "Dashboard",
+      "subtitle": "Here is your money snapshot for this month",
+      "quickAdd": "Quick Add",
+      "balance": "Balance",
+      "income": "Income",
+      "expenses": "Expenses",
+      "balanceFormula": "Income − Expenses this month",
+      "trendTitle": "Income vs Expense (6 months)",
+      "recentTitle": "Recent Transactions",
+      "viewAll": "View All",
+      "noTransactions": "No transactions logged yet.",
+      "categoryPie": "Category Breakdown",
+      "topCategory": "Top Spending Category",
+      "overspendingAlerts": "Overspending Alerts",
+      "aiTipsTitle": "AI Saving Tips",
+      "noAlerts": "No budget alerts! You are spending within your limits.",
+      "pinTip": "Pin Tip",
+      "dismissTip": "Dismiss",
+      "pinned": "Pinned"
+    },
+    "transactions": {
+      "title": "Transactions",
+      "subtitle": "Track and manage your campus income and expenses",
+      "addTransaction": "Add Transaction",
+      "searchPlaceholder": "Search by note, category, or amount...",
+      "allTypes": "All Types",
+      "income": "Income",
+      "expense": "Expense",
+      "allCategories": "All Categories",
+      "date": "Date",
+      "category": "Category",
+      "note": "Note",
+      "type": "Type",
+      "amount": "Amount",
+      "actions": "Actions",
+      "edit": "Edit",
+      "delete": "Delete",
+      "exportCsv": "Export CSV",
+      "importCsv": "Import CSV",
+      "noTransactions": "No transactions found matching your filter.",
+      "confirmDelete": "Are you sure you want to delete this transaction?"
+    },
+    "categories": {
+      "title": "Categories",
+      "subtitle": "Organize your transactions with student-friendly categories",
+      "addCategory": "Add Custom Category",
+      "name": "Category Name",
+      "type": "Type",
+      "icon": "Icon",
+      "color": "Color",
+      "save": "Save Category",
+      "noCategories": "No categories available."
+    },
+    "budgets": {
+      "title": "Category Budgets",
+      "subtitle": "Set monthly spending caps in PKR to prevent overspending",
+      "addBudget": "Set Budget Cap",
+      "spent": "Spent",
+      "limit": "Monthly Limit",
+      "remaining": "Remaining",
+      "overBudget": "Over Budget!",
+      "nearLimit": "Near Limit (80%+)",
+      "noBudgets": "No budget caps set yet."
+    },
+    "recurring": {
+      "title": "Recurring Subscriptions",
+      "subtitle": "Keep track of hostel bills, internet, and recurring subscriptions",
+      "addRecurring": "Add Subscription",
+      "frequency": "Frequency",
+      "monthly": "Monthly",
+      "weekly": "Weekly",
+      "nextDue": "Next Due Date",
+      "status": "Status",
+      "active": "Active",
+      "paused": "Paused"
+    },
+    "reports": {
+      "title": "Visual Reports",
+      "subtitle": "Deep dive into your monthly spending patterns and trends",
+      "monthlyTrend": "Monthly Trend",
+      "incomeVsExpense": "Income vs Expense Breakdown",
+      "savingsRate": "Savings Rate",
+      "topExpenseCat": "Highest Expense Category"
+    },
+    "insights": {
+      "title": "AI Insights & Saving Tips",
+      "subtitle": "Personalized advice generated based on your spending history",
+      "pinnedTips": "Pinned Tips",
+      "allTips": "All AI Recommendations",
+      "impact": "Impact",
+      "highImpact": "High Impact",
+      "medImpact": "Medium Impact",
+      "noTips": "No saving tips available right now."
+    },
+    "bookmarks": {
+      "title": "Bookmarked Tips",
+      "subtitle": "Saved AI tips and reference notes for exam week",
+      "noBookmarks": "You haven't bookmarked any tips yet.",
+      "remove": "Remove Bookmark"
+    },
+    "profile": {
+      "title": "Profile & Settings",
+      "subtitle": "Manage your student account profile and monthly targets",
+      "fullName": "Full Name",
+      "email": "Email Address",
+      "academicYear": "Academic Year",
+      "monthlyAllowance": "Monthly Allowance (PKR)",
+      "savingsGoal": "Savings Goal (PKR)",
+      "saveProfile": "Save Profile Changes",
+      "savedSuccess": "Profile updated successfully!"
+    }
   }
 }

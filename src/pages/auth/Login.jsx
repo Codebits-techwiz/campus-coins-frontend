@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, ArrowRight } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Logo } from '../../components/Logo';
 import { Button } from '../../components/Button';
@@ -13,6 +13,7 @@ export default function Login() {
   const { setRole, setProfile, showToast } = useApp();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -39,7 +40,6 @@ export default function Login() {
     }
   };
 
-  console.log("Login render");
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12 bg-gradient-to-br from-cc-mint-soft to-cc-cream animate-fade-in">
       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-gray-100 p-8">
@@ -72,12 +72,20 @@ export default function Login() {
             <div className="mt-1.5 relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cc-muted" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-cc-lime focus:ring-2 focus:ring-cc-lime/20 outline-none text-sm"
+                className="w-full pl-10 pr-11 py-3 rounded-xl border border-gray-200 focus:border-cc-lime focus:ring-2 focus:ring-cc-lime/20 outline-none text-sm"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-cc-muted hover:text-cc-forest transition"
+                aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
           <div className="flex justify-end">

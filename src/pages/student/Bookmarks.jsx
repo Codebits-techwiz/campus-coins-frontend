@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Bookmark, Pencil, Trash2, Loader2, Pin } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../../components/Button';
+import { translateDynamicText } from '../../utils/translateDynamicText';
 
 export default function Bookmarks() {
+  const { t, i18n } = useTranslation();
   const { showToast } = useApp();
   const [bookmarks, setBookmarks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,7 +22,7 @@ export default function Bookmarks() {
         setBookmarks(res.data.data);
       }
     } catch (err) {
-      showToast('Failed to load bookmarks', 'error');
+      showToast(t('common.loading'), 'error');
     }
     setLoading(false);
   };
@@ -29,13 +32,13 @@ export default function Bookmarks() {
   }, []);
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Remove this bookmark?')) return;
+    if (!window.confirm(t('app.transactions.confirmDelete'))) return;
     try {
       await api.delete(`/api/bookmarks/${id}`);
       setBookmarks((prev) => prev.filter((b) => b._id !== id));
-      showToast('Bookmark removed', 'success');
+      showToast(t('app.bookmarks.remove'), 'success');
     } catch (err) {
-      showToast('Failed to delete bookmark', 'error');
+      showToast(t('common.loading'), 'error');
     }
   };
 
@@ -51,10 +54,10 @@ export default function Bookmarks() {
         setBookmarks((prev) =>
           prev.map((b) => (b._id === id ? { ...b, note: editNote } : b))
         );
-        showToast('Note updated', 'success');
+        showToast(t('app.profile.savedSuccess'), 'success');
       }
     } catch (err) {
-      showToast('Failed to update note', 'error');
+      showToast(t('common.loading'), 'error');
     }
     setEditingId(null);
   };
@@ -63,10 +66,10 @@ export default function Bookmarks() {
     <div className="animate-fade-in space-y-6 max-w-5xl">
       <div>
         <h1 className="text-2xl font-extrabold text-cc-forest flex items-center gap-2">
-          <Bookmark className="w-7 h-7 text-cc-lime" /> Bookmarks
+          <Bookmark className="w-7 h-7 text-cc-lime" /> {t('app.bookmarks.title')}
         </h1>
         <p className="text-sm text-cc-muted mt-1">
-          Your saved tips and monthly insights for quick reference.
+          {t('app.bookmarks.subtitle')}
         </p>
       </div>
 
@@ -76,19 +79,20 @@ export default function Bookmarks() {
         </div>
       ) : bookmarks.length === 0 ? (
         <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-8 text-center text-sm text-cc-muted">
-          You haven't bookmarked anything yet. Go to Insights to save a tip or summary!
+          {t('app.bookmarks.noBookmarks')}
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {bookmarks.map((b) => {
             const isTip = b.refType === 'tip';
-            const title = isTip ? 'Saving Tip' : 'Monthly Insight';
+            const title = isTip ? t('app.insights.pinnedTips') : t('app.insights.title');
             const item = b.ref || (isTip ? b.tip : b.insight);
 
             let contentText = isTip ? 'This tip is no longer available' : 'This insight is no longer available';
             if (item) {
               contentText = item.summaryText || item.text || contentText;
             }
+            contentText = translateDynamicText(contentText, i18n.language);
 
             return (
               <div key={b._id} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col">
@@ -105,14 +109,14 @@ export default function Bookmarks() {
                     <button
                       onClick={() => startEdit(b)}
                       className="text-cc-muted hover:text-cc-forest transition"
-                      title="Edit note"
+                      title={t('app.transactions.edit')}
                     >
                       <Pencil className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(b._id)}
                       className="text-cc-muted hover:text-red-500 transition"
-                      title="Remove bookmark"
+                      title={t('app.bookmarks.remove')}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -130,20 +134,20 @@ export default function Bookmarks() {
                         type="text"
                         value={editNote}
                         onChange={(e) => setEditNote(e.target.value)}
-                        placeholder="Add a personal note..."
+                        placeholder="Note..."
                         className="flex-1 text-sm border border-gray-200 rounded-lg px-2 py-1 outline-none focus:border-cc-lime"
                         autoFocus
                       />
                       <Button onClick={() => saveEdit(b._id)} className="!py-1 !px-3 !rounded-lg !text-xs">
-                        Save
+                        {t('app.categories.save')}
                       </Button>
-                      <button onClick={() => setEditingId(null)} className="text-xs text-cc-muted font-medium px-2">Cancel</button>
+                      <button onClick={() => setEditingId(null)} className="text-xs text-cc-muted font-medium px-2">{t('chatbot.close')}</button>
                     </div>
                   ) : (
                     <p className="text-sm">
-                      <strong className="text-xs uppercase text-cc-muted mr-1 font-bold">Note:</strong>
+                      <strong className="text-xs uppercase text-cc-muted mr-1 font-bold">{t('app.transactions.note')}:</strong>
                       <span className={b.note ? 'text-cc-forest' : 'text-gray-400 italic'}>
-                        {b.note || 'No note added'}
+                        {b.note || '—'}
                       </span>
                     </p>
                   )}

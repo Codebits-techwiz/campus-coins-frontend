@@ -38,6 +38,7 @@ export function AdminLayout() {
     } catch (err) {
       console.error('Logout error', err);
     }
+    localStorage.removeItem('cc_logged_in');
     setProfile?.(null);
     setRole('public');
     navigate('/');

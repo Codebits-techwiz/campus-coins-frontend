@@ -7,17 +7,18 @@ import { useApp } from '../../context/AppContext';
 
 export default function HowItWorks() {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { siteContent } = useApp();
+  const isUr = i18n.language === 'ur';
 
   const defaultSteps = [
-    { n: '1', title: t('howItWorks.steps.1.title'), desc: t('howItWorks.steps.1.desc') },
-    { n: '2', title: t('howItWorks.steps.2.title'), desc: t('howItWorks.steps.2.desc') },
-    { n: '3', title: t('howItWorks.steps.3.title'), desc: t('howItWorks.steps.3.desc') },
+    { n: isUr ? '۱' : '1', title: t('howItWorks.steps.1.title'), desc: t('howItWorks.steps.1.desc') },
+    { n: isUr ? '۲' : '2', title: t('howItWorks.steps.2.title'), desc: t('howItWorks.steps.2.desc') },
+    { n: isUr ? '۳' : '3', title: t('howItWorks.steps.3.title'), desc: t('howItWorks.steps.3.desc') },
   ];
 
   const dynamicItems = siteContent?.howItWorks?.items;
-  const steps = (dynamicItems && dynamicItems.length > 0)
+  const steps = (!isUr && dynamicItems && dynamicItems.length > 0)
     ? dynamicItems.map((item, idx) => ({
         n: (idx + 1).toString(),
         title: item.title,
@@ -25,9 +26,9 @@ export default function HowItWorks() {
       }))
     : defaultSteps;
 
-  const eyebrow = siteContent?.howItWorks?.badge || t('howItWorks.eyebrow');
-  const title = siteContent?.howItWorks?.title || t('howItWorks.title');
-  const subtitle = siteContent?.howItWorks?.subtitle || t('howItWorks.subtitle');
+  const eyebrow = isUr ? t('howItWorks.eyebrow') : (siteContent?.howItWorks?.badge || t('howItWorks.eyebrow'));
+  const title = isUr ? t('howItWorks.title') : (siteContent?.howItWorks?.title || t('howItWorks.title'));
+  const subtitle = isUr ? t('howItWorks.subtitle') : (siteContent?.howItWorks?.subtitle || t('howItWorks.subtitle'));
 
   return (
     <div className="animate-fade-in min-h-[70vh]">

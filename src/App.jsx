@@ -12,6 +12,8 @@ import Testimonials from './pages/public/Testimonials';
 import Faq from './pages/public/Faq';
 import Sitemap from './pages/public/Sitemap';
 import BackendBlueprint from './pages/public/BackendBlueprint';
+import UserGuide from './pages/public/UserGuide';
+import PrivacyPolicy from './pages/public/PrivacyPolicy';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import ForgotPassword from './pages/auth/ForgotPassword';
@@ -67,6 +69,9 @@ function AppRoutes() {
           <Route path="/" element={<Home />} />
           <Route path="/features" element={<Features />} />
           <Route path="/how-it-works" element={<HowItWorks />} />
+          <Route path="/user-guide" element={<UserGuide />} />
+          <Route path="/guide" element={<UserGuide />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/testimonials" element={<Testimonials />} />
           <Route path="/faq" element={<Faq />} />

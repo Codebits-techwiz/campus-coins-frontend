@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { MessageCircle, X, Send, Bot, User } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, User, Loader2, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useApp } from '../context/AppContext';
 import { faqItems } from '../data/mockData';
+import api from '../api';
 
 function makeId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -13,6 +14,7 @@ export function FaqChatbot() {
   const { chatOpen, closeChat, toggleChat } = useApp();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -24,7 +26,7 @@ export function FaqChatbot() {
         {
           id: makeId(),
           role: 'bot',
-          text: t('chatbot.welcome'),
+          text: t('chatbot.welcome', { defaultValue: "Hi! 👋 I'm Campus Coin AI Assistant. Ask me anything about Campus Coin, student budgeting, or features!" }),
         },
       ];
     });
@@ -34,51 +36,43 @@ export function FaqChatbot() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, chatOpen]);
+  }, [messages, loading, chatOpen]);
 
-  const answerFaq = (item) => {
-    const q = t(item.qKey);
-    const a = t(item.aKey);
-    setMessages((prev) => [
-      ...prev,
-      { id: makeId(), role: 'user', text: q },
-      { id: makeId(), role: 'bot', text: a },
-    ]);
-  };
+  const sendMessage = async (textToSend) => {
+    const trimmed = textToSend.trim();
+    if (!trimmed || loading) return;
 
-  const findFaqMatch = (text) => {
-    const needle = text.trim().toLowerCase();
-    if (!needle) return null;
-    return (
-      faqItems.find((item) => {
-        const q = t(item.qKey).toLowerCase();
-        const a = t(item.aKey).toLowerCase();
-        return q.includes(needle) || needle.includes(q.slice(0, 24)) || a.includes(needle);
-      }) || null
-    );
+    const userMsg = { id: makeId(), role: 'user', text: trimmed };
+    const historyForApi = messages.map((m) => ({ role: m.role, text: m.text }));
+
+    setMessages((prev) => [...prev, userMsg]);
+    setInput('');
+    setLoading(true);
+
+    try {
+      const res = await api.post('/api/chat', { message: trimmed, history: historyForApi });
+      const botReply =
+        res.data?.data?.reply ||
+        "I'm having trouble connecting right now - please check our FAQ section below or try again shortly.";
+      setMessages((prev) => [...prev, { id: makeId(), role: 'bot', text: botReply }]);
+    } catch (err) {
+      const fallbackMsg =
+        err.response?.data?.error ||
+        "I'm having trouble connecting right now - please check our FAQ section below or try again shortly.";
+      setMessages((prev) => [...prev, { id: makeId(), role: 'bot', text: fallbackMsg }]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSend = (e) => {
     e.preventDefault();
-    const text = input.trim();
-    if (!text) return;
-    setInput('');
+    sendMessage(input);
+  };
 
-    const match = findFaqMatch(text);
-    if (match) {
-      setMessages((prev) => [
-        ...prev,
-        { id: makeId(), role: 'user', text },
-        { id: makeId(), role: 'bot', text: t(match.aKey) },
-      ]);
-      return;
-    }
-
-    setMessages((prev) => [
-      ...prev,
-      { id: makeId(), role: 'user', text },
-      { id: makeId(), role: 'bot', text: t('chatbot.pickSuggested') },
-    ]);
+  const handleQuestionChip = (item) => {
+    const q = t(item.qKey);
+    sendMessage(q);
   };
 
   const askedIds = new Set(
@@ -91,7 +85,7 @@ export function FaqChatbot() {
     <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3 pointer-events-none">
       {chatOpen && (
         <div
-          className="pointer-events-auto w-[min(100vw-2rem,22rem)] h-[min(70vh,28rem)] bg-white border border-gray-100 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-fade-in"
+          className="pointer-events-auto w-[min(100vw-2rem,23rem)] h-[min(70vh,30rem)] bg-white border border-gray-100 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-fade-in"
           role="dialog"
           aria-label={t('chatbot.title')}
         >
@@ -101,8 +95,13 @@ export function FaqChatbot() {
                 <Bot className="w-5 h-5 text-cc-lime" />
               </span>
               <div className="min-w-0">
-                <p className="text-sm font-bold leading-tight truncate">{t('chatbot.title')}</p>
-                <p className="text-[11px] text-white/60 truncate">{t('chatbot.subtitle')}</p>
+                <p className="text-sm font-bold leading-tight truncate flex items-center gap-1.5">
+                  {t('chatbot.title', { defaultValue: 'Campus Coin AI Assistant' })}
+                  <Sparkles className="w-3.5 h-3.5 text-cc-lime shrink-0 animate-pulse" />
+                </p>
+                <p className="text-[11px] text-white/60 truncate">
+                  {t('chatbot.subtitle', { defaultValue: 'Powered by Gemini AI' })}
+                </p>
               </div>
             </div>
             <button
@@ -122,43 +121,59 @@ export function FaqChatbot() {
                 className={`flex gap-2 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {m.role === 'bot' && (
-                  <span className="w-7 h-7 rounded-full bg-cc-forest text-white flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="w-7 h-7 rounded-full bg-cc-forest text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
                     <Bot className="w-3.5 h-3.5" />
                   </span>
                 )}
                 <div
-                  className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
+                  className={`max-w-[82%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed ${
                     m.role === 'user'
-                      ? 'bg-cc-forest text-white rounded-br-md'
+                      ? 'bg-cc-forest text-white rounded-br-md font-medium'
                       : 'bg-white text-cc-ink border border-gray-100 rounded-bl-md shadow-sm'
                   }`}
                 >
                   {m.text}
                 </div>
                 {m.role === 'user' && (
-                  <span className="w-7 h-7 rounded-full bg-cc-lime text-white flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="w-7 h-7 rounded-full bg-cc-lime text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
                     <User className="w-3.5 h-3.5" />
                   </span>
                 )}
               </div>
             ))}
 
-            <div className="flex flex-wrap gap-2 pt-1">
-              {faqItems.map((item) => {
-                const label = t(item.qKey);
-                if (askedIds.has(label)) return null;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => answerFaq(item)}
-                    className="text-left text-xs font-medium px-3 py-2 rounded-full border border-cc-forest/15 bg-white text-cc-forest hover:bg-cc-mint hover:border-cc-lime transition shadow-sm"
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
+            {loading && (
+              <div className="flex gap-2 justify-start items-center">
+                <span className="w-7 h-7 rounded-full bg-cc-forest text-white flex items-center justify-center shrink-0 shadow-sm">
+                  <Bot className="w-3.5 h-3.5 animate-spin" />
+                </span>
+                <div className="bg-white border border-gray-100 rounded-2xl rounded-bl-md px-3.5 py-2.5 text-xs text-cc-muted flex items-center gap-1.5 shadow-sm">
+                  <span className="w-2 h-2 bg-cc-lime rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-2 h-2 bg-cc-lime rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-2 h-2 bg-cc-lime rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <span className="ml-1 text-[11px] font-medium text-cc-muted">AI is thinking...</span>
+                </div>
+              </div>
+            )}
+
+            {!loading && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {faqItems.map((item) => {
+                  const label = t(item.qKey);
+                  if (askedIds.has(label)) return null;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => handleQuestionChip(item)}
+                      className="text-left text-[11px] font-medium px-3 py-1.5 rounded-full border border-cc-forest/15 bg-white text-cc-forest hover:bg-cc-mint hover:border-cc-lime transition shadow-sm"
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             <div ref={bottomRef} />
           </div>
 
@@ -171,16 +186,16 @@ export function FaqChatbot() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={t('chatbot.placeholder')}
-              className="flex-1 min-w-0 rounded-xl border border-gray-200 px-3 py-2 text-sm text-cc-ink placeholder:text-cc-muted focus:outline-none focus:ring-2 focus:ring-cc-lime/40 focus:border-cc-lime"
+              placeholder={t('chatbot.placeholder', { defaultValue: 'Ask AI about Campus Coin...' })}
+              className="flex-1 min-w-0 rounded-xl border border-gray-200 px-3 py-2 text-xs text-cc-ink placeholder:text-cc-muted focus:outline-none focus:ring-2 focus:ring-cc-lime/40 focus:border-cc-lime"
             />
             <button
               type="submit"
-              disabled={!input.trim()}
+              disabled={!input.trim() || loading}
               className="p-2.5 rounded-xl bg-cc-forest text-white hover:bg-cc-forest-light disabled:opacity-40 disabled:pointer-events-none transition"
               aria-label={t('chatbot.send')}
             >
-              <Send className="w-4 h-4" />
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             </button>
           </form>
         </div>

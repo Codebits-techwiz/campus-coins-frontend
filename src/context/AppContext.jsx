@@ -60,16 +60,25 @@ export function AppProvider({ children }) {
 
   useEffect(() => {
     const checkSession = async () => {
+      const isLoggedIn = localStorage.getItem('cc_logged_in') === 'true';
+      if (!isLoggedIn) {
+        setProfile(null);
+        setRole('public');
+        setAuthLoading(false);
+        return;
+      }
+
       try {
         const res = await api.get('/api/users/profile');
         if (res.data.success) {
           setProfile(res.data.data);
           setRole(res.data.data.role); // 'student' or 'admin'
+          localStorage.setItem('cc_logged_in', 'true');
           setAuthLoading(false);
         }
       } catch (err) {
         if (err.response?.status === 401) {
-          // 401 means no valid cookie, properly log out
+          localStorage.removeItem('cc_logged_in');
           setProfile(null);
           setRole('public');
           setAuthLoading(false);
@@ -77,7 +86,7 @@ export function AppProvider({ children }) {
           // Rate limited. Do not touch session. Retry silently.
           setTimeout(checkSession, 1500);
         } else {
-          // Other unexpected errors
+          localStorage.removeItem('cc_logged_in');
           setProfile(null);
           setRole('public');
           setAuthLoading(false);
@@ -87,6 +96,12 @@ export function AppProvider({ children }) {
 
     checkSession();
   }, []);
+
+  useEffect(() => {
+    if (profile) {
+      localStorage.setItem('cc_logged_in', 'true');
+    }
+  }, [profile]);
 
 
   useEffect(() => {

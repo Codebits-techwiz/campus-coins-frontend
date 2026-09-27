@@ -1,10 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Plus, Pencil, Trash2, X } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../../components/Button';
 import { iconMap, PRESET_COLORS, CategoryIcon } from '../../utils/categoryIcons';
+import { translateDynamicText } from '../../utils/translateDynamicText';
 
 export default function Categories() {
+  const { t, i18n } = useTranslation();
   const { categories, addCategory, updateCategory, deleteCategory } = useApp();
   const [show, setShow] = useState(false);
   const [editId, setEditId] = useState(null);
@@ -59,7 +62,7 @@ export default function Categories() {
           <div className="flex items-center gap-3">
             <CategoryIcon iconKey={c.icon} color={c.color} className="w-5 h-5" />
             <div>
-              <p className="font-semibold text-cc-forest">{c.name}</p>
+              <p className="font-semibold text-cc-forest">{translateDynamicText(c.name, i18n.language)}</p>
               <p className="text-xs text-cc-muted capitalize">{c.type} / {c.isDefault ? 'Default' : 'Personal'}</p>
             </div>
           </div>
@@ -82,11 +85,11 @@ export default function Categories() {
     <div className="animate-fade-in space-y-8 max-w-5xl">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-cc-forest">Manage Categories</h1>
-          <p className="text-sm text-cc-muted">Defaults plus your personal income &amp; expense categories</p>
+          <h1 className="text-2xl font-extrabold text-cc-forest">{t('app.categories.title')}</h1>
+          <p className="text-sm text-cc-muted">{t('app.categories.subtitle')}</p>
         </div>
         <Button onClick={openAdd} className="!rounded-xl">
-          <Plus className="w-4 h-4" /> Add Personal Category
+          <Plus className="w-4 h-4" /> {t('app.categories.addCategory')}
         </Button>
       </div>
 

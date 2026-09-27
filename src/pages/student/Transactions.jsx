@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, Sparkles, X, Search, FileUp, UploadCloud, Camera, Eye } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Plus, Pencil, Trash2, Sparkles, X, Search, FileUp, UploadCloud, Camera, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import api from '../../api';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../../components/Button';
@@ -16,6 +17,7 @@ const empty = {
 };
 
 export default function Transactions() {
+  const { t } = useTranslation();
   const {
     transactions,
     categories,
@@ -36,7 +38,7 @@ export default function Transactions() {
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [aiHint, setAiHint] = useState(null);
 
   useEffect(() => {
@@ -75,12 +77,14 @@ export default function Transactions() {
     const timer = setTimeout(() => {
       api.post('/api/ai/predict-category', { description: form.description })
         .then(res => {
-          if (res.data.success && res.data.data) {
+          if (res.data.success && res.data.data && res.data.data.suggestedCategoryId) {
             setAiHint(res.data.data);
+          } else {
+            setAiHint(null);
           }
         })
         .catch(() => setAiHint(null));
-    }, 500);
+    }, 400);
     return () => clearTimeout(timer);
   }, [form.description, form.type]);
 
@@ -132,7 +136,21 @@ export default function Transactions() {
 
   const applyAi = () => {
     if (!aiHint) return;
-    setForm((f) => ({ ...f, categoryId: aiHint.suggestedCategoryId || aiHint._id || aiHint.id }));
+    const targetCatId = aiHint.suggestedCategoryId || aiHint._id || aiHint.id;
+    const targetCatName = (aiHint.categoryName || aiHint.name || '').toLowerCase();
+
+    const matched = categories.find(c =>
+      (c._id || c.id) === targetCatId ||
+      c.name.toLowerCase() === targetCatName ||
+      c.name.toLowerCase().includes(targetCatName) ||
+      targetCatName.includes(c.name.toLowerCase())
+    );
+
+    if (matched) {
+      setForm((f) => ({ ...f, categoryId: matched._id || matched.id }));
+    } else if (targetCatId) {
+      setForm((f) => ({ ...f, categoryId: targetCatId }));
+    }
   };
 
   const [submitting, setSubmitting] = useState(false);
@@ -299,8 +317,8 @@ export default function Transactions() {
       <div className="animate-fade-in space-y-6 max-w-5xl">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-cc-forest">Transactions</h1>
-          <p className="text-sm text-cc-muted">Log income and expenses with AI category suggestions</p>
+          <h1 className="text-2xl font-extrabold text-cc-forest">{t('app.transactions.title')}</h1>
+          <p className="text-sm text-cc-muted">{t('app.transactions.subtitle')}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <div>
@@ -310,157 +328,270 @@ export default function Transactions() {
             </label>
           </div>
           <Button variant="outline" onClick={() => { setShowCsvForm(true); setShowForm(false); setCsvPreview(null); setCsvFile(null); setCsvError(''); }} className="!rounded-xl border-2">
-            <FileUp className="w-4 h-4" /> Import CSV
+            <FileUp className="w-4 h-4" /> {t('app.transactions.importCsv')}
           </Button>
           <Button onClick={openAdd} className="!rounded-xl">
-            <Plus className="w-4 h-4" /> Add Transaction
+            <Plus className="w-4 h-4" /> {t('app.transactions.addTransaction')}
           </Button>
         </div>
       </div>
 
-      {/* Quick Templates */}
+      {/* Quick Templates Bar */}
       {templates.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          {templates.map(t => (
-            <div key={getId(t)} className="relative group">
-              <button
-                onClick={() => useTemplate(t)}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-100 rounded-xl shadow-sm text-sm font-semibold hover:border-cc-lime hover:shadow transition whitespace-nowrap pr-8"
-              >
-                <CategoryIcon iconKey={t.category?.icon} color={t.category?.color} className="w-4 h-4" />
-                <span>{t.name}</span>
-                <span className="text-cc-muted font-normal">{formatPkr(Number(t.amount))}</span>
-              </button>
-              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+        <div className="space-y-1.5">
+          <p className="text-[11px] font-extrabold text-cc-forest uppercase tracking-wider flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-cc-lime shrink-0" /> Quick Saved Templates (Click to Auto-fill)
+          </p>
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            {templates.map((t) => (
+              <div key={getId(t)} className="relative group shrink-0">
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setEditingTemplate(getId(t));
-                    setTemplateForm({
-                      name: t.name,
-                      amount: String(t.amount),
-                      type: t.type,
-                      category: getCatId(t) || ''
-                    });
-                  }}
-                  className="p-1 bg-gray-100 hover:bg-cc-mint hover:text-cc-forest rounded-full text-gray-400 transition"
+                  type="button"
+                  onClick={() => useTemplate(t)}
+                  className="flex items-center gap-2 px-3.5 py-1.5 bg-white border border-gray-200 rounded-xl shadow-sm text-xs font-bold text-cc-forest hover:border-cc-lime hover:bg-cc-mint-soft transition whitespace-nowrap pr-8"
                 >
-                  <Pencil className="w-3 h-3" />
+                  <CategoryIcon iconKey={t.category?.icon} color={t.category?.color} className="w-3.5 h-3.5 shrink-0" />
+                  <span>{t.name}</span>
+                  <span className="text-cc-muted font-semibold">{formatPkr(Number(t.amount))}</span>
                 </button>
-                <button
-                  onClick={async (e) => {
-                    e.stopPropagation();
-                    try {
-                      await api.delete(`/api/templates/${getId(t)}`);
-                      setTemplates(prev => prev.filter(x => getId(x) !== getId(t)));
-                      showToast('Template deleted', 'success');
-                    } catch (err) {
-                      showToast('Failed to delete template', 'error');
-                    }
-                  }}
-                  className="p-1 bg-gray-100 hover:bg-red-100 hover:text-red-600 rounded-full text-gray-400 transition"
-                >
-                  <X className="w-3 h-3" />
-                </button>
+                <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition bg-white/90 px-1 rounded-lg">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingTemplate(getId(t));
+                      setTemplateForm({
+                        name: t.name,
+                        amount: String(t.amount),
+                        type: t.type,
+                        category: getCatId(t) || '',
+                      });
+                    }}
+                    className="p-1 hover:bg-cc-mint hover:text-cc-forest rounded-md text-cc-muted transition"
+                    title="Edit Template"
+                  >
+                    <Pencil className="w-3 h-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      try {
+                        await api.delete(`/api/templates/${getId(t)}`);
+                        setTemplates((prev) => prev.filter((x) => getId(x) !== getId(t)));
+                        showToast('Template deleted', 'success');
+                      } catch (err) {
+                        showToast('Failed to delete template', 'error');
+                      }
+                    }}
+                    className="p-1 hover:bg-red-100 hover:text-red-600 rounded-md text-cc-muted transition"
+                    title="Delete Template"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="flex gap-2">
+
+      {/* Filter Tabs & Executive Search Bar */}
+      <div className="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5">
           {['all', 'income', 'expense'].map((f) => (
             <button
               key={f}
               type="button"
               onClick={() => setFilter(f)}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold capitalize transition ${filter === f ? 'bg-cc-forest text-white' : 'bg-white text-cc-muted border border-gray-200'
-                }`}
+              className={`px-4 py-2 rounded-xl text-xs font-extrabold capitalize transition ${
+                filter === f
+                  ? 'bg-cc-forest text-white shadow-sm ring-2 ring-cc-lime/30'
+                  : 'bg-gray-50 text-cc-muted hover:bg-gray-100 hover:text-cc-forest border border-gray-200/60'
+              }`}
             >
               {f}
             </button>
           ))}
         </div>
-        <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cc-muted" />
+
+        <div className="relative flex-1 sm:max-w-xs">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-cc-muted" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search transactions..."
-            className="w-full pl-9 pr-4 py-1.5 rounded-full border border-gray-200 text-sm outline-none focus:border-cc-lime"
+            placeholder="Search by description or category..."
+            className="w-full pl-9 pr-8 py-2 rounded-xl border border-gray-200 text-xs font-medium outline-none focus:border-cc-lime focus:ring-2 focus:ring-cc-lime/20 bg-gray-50/50 transition"
           />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-cc-muted hover:text-cc-forest p-0.5"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
 
-
-      {/* Transactions Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mt-6 mb-8">
+      {/* Transactions Table & Pagination */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mt-4 mb-8">
         {filtered.length === 0 ? (
-          <p className="text-sm text-cc-muted text-center p-8">
-            {transactions.length === 0 ? 'No transactions yet. Add your first one!' : 'No results found.'}
-          </p>
+          <div className="p-12 text-center space-y-2">
+            <Search className="w-8 h-8 text-cc-muted mx-auto opacity-30" />
+            <p className="text-sm font-bold text-cc-forest">
+              {transactions.length === 0 ? 'No transactions logged yet.' : 'No matching transactions found.'}
+            </p>
+            <p className="text-xs text-cc-muted">
+              {transactions.length === 0
+                ? 'Click "+ Add Transaction" above to log your first income or expense.'
+                : 'Try clearing your search query or changing filters.'}
+            </p>
+          </div>
         ) : (
           <>
             <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-cc-mint-soft">
-                <tr className="text-left text-xs text-cc-muted">
-                  <th className="px-4 py-3 font-semibold">Date</th>
-                  <th className="px-4 py-3 font-semibold">Description</th>
-                  <th className="px-4 py-3 font-semibold">Category</th>
-                  <th className="px-4 py-3 font-semibold">Type</th>
-                  <th className="px-4 py-3 font-semibold text-right">Amount</th>
-                  <th className="px-4 py-3 font-semibold text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginated.map((t) => (
-                  <tr key={getId(t)} className="border-t border-gray-50 hover:bg-cc-mint-soft/50">
-                    <td className="px-4 py-3 text-cc-muted whitespace-nowrap">
-                      {t.date ? new Date(t.date).toLocaleDateString() : '—'}
-                    </td>
-                    <td className="px-4 py-3 font-medium">{t.description}</td>
-                    <td className="px-4 py-3">
-                      <span 
-                        className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full"
-                        style={{ backgroundColor: t.category?.color ? `${t.category.color}20` : '#f0fdf4', color: t.category?.color || '#166534' }}
-                      >
-                        <CategoryIcon iconKey={t.category?.icon} color={t.category?.color || '#166534'} className="w-3.5 h-3.5" />
-                        {getCatName(t)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 capitalize text-xs font-semibold text-cc-muted">{t.type}</td>
-                    <td className={`px-4 py-3 text-right font-bold ${t.type === 'income' ? 'text-cc-lime' : 'text-red-500'}`}>
-                      {t.type === 'income' ? '+' : '-'}{formatMoney(Number(t.amount), profile?.currency)}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <button type="button" onClick={() => openView(t)} className="p-1.5 text-cc-muted hover:text-cc-forest">
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button type="button" onClick={() => openEdit(t)} className="p-1.5 text-cc-muted hover:text-cc-lime">
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button type="button" onClick={() => deleteTransaction(getId(t))} className="p-1.5 text-cc-muted hover:text-red-500">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
+              <table className="w-full text-sm">
+                <thead className="bg-cc-mint-soft border-b border-gray-100">
+                  <tr className="text-left text-xs font-bold text-cc-forest uppercase tracking-wider">
+                    <th className="px-4 py-3.5">Date</th>
+                    <th className="px-4 py-3.5">Description</th>
+                    <th className="px-4 py-3.5">Category</th>
+                    <th className="px-4 py-3.5">Type</th>
+                    <th className="px-4 py-3.5 text-right">Amount</th>
+                    <th className="px-4 py-3.5 text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-gray-50/50">
-              <span className="text-sm text-cc-muted font-medium">
-                Showing {(page - 1) * itemsPerPage + 1} to {Math.min(page * itemsPerPage, filtered.length)} of {filtered.length}
-              </span>
-              <div className="flex gap-2">
-                <Button variant="outline" disabled={page === 1} onClick={() => setPage(p => p - 1)} className="!px-3 !py-1.5 !text-xs !rounded-lg border-2">Prev</Button>
-                <Button variant="outline" disabled={page === totalPages} onClick={() => setPage(p => p + 1)} className="!px-3 !py-1.5 !text-xs !rounded-lg border-2">Next</Button>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {paginated.map((t) => (
+                    <tr key={getId(t)} className="hover:bg-cc-mint-soft/40 transition">
+                      <td className="px-4 py-3.5 text-xs font-medium text-cc-muted whitespace-nowrap">
+                        {t.date ? new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                      </td>
+                      <td className="px-4 py-3.5 font-bold text-cc-forest">{t.description}</td>
+                      <td className="px-4 py-3.5">
+                        <span
+                          className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full"
+                          style={{
+                            backgroundColor: t.category?.color ? `${t.category.color}15` : '#f0fdf4',
+                            color: t.category?.color || '#166534',
+                          }}
+                        >
+                          <CategoryIcon iconKey={t.category?.icon} color={t.category?.color || '#166534'} className="w-3.5 h-3.5" />
+                          {getCatName(t)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5 capitalize text-xs font-bold text-cc-muted">{t.type}</td>
+                      <td className={`px-4 py-3.5 text-right font-extrabold ${t.type === 'income' ? 'text-cc-lime' : 'text-red-500'}`}>
+                        {t.type === 'income' ? '+' : '-'}{formatMoney(Number(t.amount), profile?.currency)}
+                      </td>
+                      <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => openView(t)}
+                          className="p-1.5 rounded-lg text-cc-muted hover:text-cc-forest hover:bg-gray-100 transition"
+                          title="View Details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openEdit(t)}
+                          className="p-1.5 rounded-lg text-cc-muted hover:text-cc-lime hover:bg-cc-mint transition"
+                          title="Edit Transaction"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteTransaction(getId(t))}
+                          className="p-1.5 rounded-lg text-cc-muted hover:text-red-600 hover:bg-red-50 transition"
+                          title="Delete Transaction"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Executive Professional Pagination Controls */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t border-gray-100 bg-gray-50/60">
+              <div className="flex flex-wrap items-center gap-3 text-xs text-cc-muted font-medium">
+                <span>
+                  Showing <strong className="text-cc-forest">{(page - 1) * itemsPerPage + 1}</strong> to{' '}
+                  <strong className="text-cc-forest">{Math.min(page * itemsPerPage, filtered.length)}</strong> of{' '}
+                  <strong className="text-cc-forest">{filtered.length}</strong> transactions
+                </span>
+
+                <div className="flex items-center gap-1.5 border-l border-gray-300 pl-3">
+                  <span>Show:</span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value));
+                      setPage(1);
+                    }}
+                    className="bg-white border border-gray-200 rounded-lg px-2 py-1 text-xs font-bold text-cc-forest outline-none focus:border-cc-lime cursor-pointer shadow-sm"
+                  >
+                    <option value={5}>5 rows</option>
+                    <option value={10}>10 rows</option>
+                    <option value={25}>25 rows</option>
+                    <option value={50}>50 rows</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={page === 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  className="px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-bold text-cc-forest hover:bg-cc-mint hover:border-cc-lime disabled:opacity-40 disabled:pointer-events-none transition flex items-center gap-1 shadow-sm"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" /> Prev
+                </button>
+
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                    .map((p, idx, arr) => {
+                      const prevP = arr[idx - 1];
+                      const showEllipsis = prevP && p - prevP > 1;
+
+                      return (
+                        <div key={p} className="flex items-center gap-1">
+                          {showEllipsis && <span className="text-xs text-cc-muted px-1">...</span>}
+                          <button
+                            type="button"
+                            onClick={() => setPage(p)}
+                            className={`w-7 h-7 rounded-lg text-xs font-extrabold transition flex items-center justify-center ${
+                              page === p
+                                ? 'bg-cc-forest text-white shadow-sm ring-2 ring-cc-lime/30'
+                                : 'bg-white border border-gray-200 text-cc-muted hover:bg-gray-100 hover:text-cc-forest'
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        </div>
+                      );
+                    })}
+                </div>
+
+                <button
+                  type="button"
+                  disabled={page === totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  className="px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-bold text-cc-forest hover:bg-cc-mint hover:border-cc-lime disabled:opacity-40 disabled:pointer-events-none transition flex items-center gap-1 shadow-sm"
+                >
+                  Next <ChevronRight className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
-          )}
           </>
         )}
       </div>

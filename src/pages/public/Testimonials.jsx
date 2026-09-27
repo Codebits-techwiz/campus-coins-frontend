@@ -5,15 +5,16 @@ import { testimonials as defaultTestimonials } from '../../data/mockData';
 import { useApp } from '../../context/AppContext';
 
 export default function Testimonials() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { siteContent } = useApp();
+  const isUr = i18n.language === 'ur';
 
   const dynamicItems = siteContent?.testimonials?.items;
-  const itemsToRender = (dynamicItems && dynamicItems.length > 0) ? dynamicItems : defaultTestimonials;
+  const itemsToRender = (!isUr && dynamicItems && dynamicItems.length > 0) ? dynamicItems : defaultTestimonials;
 
-  const eyebrow = siteContent?.testimonials?.badge || t('testimonialsPage.eyebrow');
-  const title = siteContent?.testimonials?.title || t('testimonialsPage.title');
-  const subtitle = siteContent?.testimonials?.subtitle || t('testimonialsPage.subtitle');
+  const eyebrow = isUr ? t('testimonialsPage.eyebrow') : (siteContent?.testimonials?.badge || t('testimonialsPage.eyebrow'));
+  const title = isUr ? t('testimonialsPage.title') : (siteContent?.testimonials?.title || t('testimonialsPage.title'));
+  const subtitle = isUr ? t('testimonialsPage.subtitle') : (siteContent?.testimonials?.subtitle || t('testimonialsPage.subtitle'));
 
   return (
     <div className="animate-fade-in min-h-[70vh]">

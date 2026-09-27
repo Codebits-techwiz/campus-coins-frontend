@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2, CalendarClock, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../../components/Button';
 import { formatMoney } from '../../utils/formatMoney';
+import { translateDynamicText } from '../../utils/translateDynamicText';
 
 const emptyForm = {
   categoryId: '',
@@ -16,6 +18,7 @@ const emptyForm = {
 };
 
 export default function Recurring() {
+  const { t, i18n } = useTranslation();
   const { categories, showToast, profile } = useApp();
   const [rules, setRules] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -32,7 +35,7 @@ export default function Recurring() {
         setRules(res.data.data);
       }
     } catch (err) {
-      showToast('Failed to fetch recurring rules', 'error');
+      showToast(t('common.loading'), 'error');
     }
     setLoading(false);
   };
@@ -62,15 +65,15 @@ export default function Recurring() {
   };
 
   const deleteRule = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this rule?')) return;
+    if (!window.confirm(t('app.transactions.confirmDelete'))) return;
     try {
       const res = await api.delete(`/api/recurring/${id}`);
       if (res.data.success) {
-        showToast('Rule deleted', 'success');
+        showToast(t('app.transactions.delete'), 'success');
         setRules(rules.filter(r => r._id !== id));
       }
     } catch (err) {
-      showToast('Failed to delete rule', 'error');
+      showToast(t('common.loading'), 'error');
     }
   };
 
@@ -105,36 +108,34 @@ export default function Recurring() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-extrabold text-cc-forest flex items-center gap-2">
-              <CalendarClock className="w-6 h-6" /> Recurring Rules
+              <CalendarClock className="w-6 h-6" /> {t('studentNav.recurring')}
             </h1>
-            <p className="text-sm text-cc-muted">Manage automated allowances and subscription charges</p>
+            <p className="text-sm text-cc-muted">{t('app.recurring.subtitle')}</p>
           </div>
           <Button onClick={openAdd} className="!rounded-xl">
-            <Plus className="w-4 h-4" /> Add Rule
+            <Plus className="w-4 h-4" /> {t('app.recurring.addRecurring')}
           </Button>
         </div>
 
-
-
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mt-6 mb-8">
         {loading ? (
-           <p className="text-sm text-cc-muted text-center p-8">Loading rules...</p>
+           <p className="text-sm text-cc-muted text-center p-8">{t('common.loading')}</p>
         ) : rules.length === 0 ? (
           <p className="text-sm text-cc-muted text-center p-8">
-            No recurring rules yet. Add your first one!
+            {t('app.budgets.noBudgets')}
           </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-cc-mint-soft">
                 <tr className="text-left text-xs text-cc-muted">
-                  <th className="px-4 py-3 font-semibold">Description</th>
-                  <th className="px-4 py-3 font-semibold">Category</th>
-                  <th className="px-4 py-3 font-semibold">Frequency</th>
-                  <th className="px-4 py-3 font-semibold">Next Run</th>
-                  <th className="px-4 py-3 font-semibold">Status</th>
-                  <th className="px-4 py-3 font-semibold text-right">Amount</th>
-                  <th className="px-4 py-3 font-semibold text-right">Actions</th>
+                  <th className="px-4 py-3 font-semibold">{t('app.transactions.note')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('app.transactions.category')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('app.recurring.frequency')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('app.recurring.nextDue')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('app.recurring.status')}</th>
+                  <th className="px-4 py-3 font-semibold text-right">{t('app.transactions.amount')}</th>
+                  <th className="px-4 py-3 font-semibold text-right">{t('app.transactions.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -143,16 +144,18 @@ export default function Recurring() {
                     <td className="px-4 py-3 font-medium">{r.description}</td>
                     <td className="px-4 py-3">
                       <span className="text-xs bg-cc-mint text-cc-forest px-2 py-0.5 rounded-full">
-                        {getCatName(r)}
+                        {translateDynamicText(getCatName(r), i18n.language)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 capitalize text-xs font-semibold text-cc-muted">{r.frequency}</td>
+                    <td className="px-4 py-3 capitalize text-xs font-semibold text-cc-muted">
+                      {r.frequency === 'monthly' ? t('app.recurring.monthly') : t('app.recurring.weekly')}
+                    </td>
                     <td className="px-4 py-3 text-cc-muted whitespace-nowrap">
                       {r.nextRunDate ? new Date(r.nextRunDate).toLocaleDateString() : '—'}
                     </td>
                     <td className="px-4 py-3">
                       <span className={`text-xs px-2 py-0.5 rounded-full ${r.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                        {r.isActive ? 'Active' : 'Paused'}
+                        {r.isActive ? t('app.recurring.active') : t('app.recurring.paused')}
                       </span>
                     </td>
                     <td className={`px-4 py-3 text-right font-bold ${r.type === 'income' ? 'text-cc-lime' : 'text-red-500'}`}>

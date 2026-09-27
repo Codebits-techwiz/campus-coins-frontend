@@ -48,6 +48,8 @@ const footerLinkDefs = [
   { key: 'home', to: '/' },
   { key: 'features', to: '/features' },
   { key: 'howItWorks', to: '/how-it-works' },
+  { key: 'userGuide', to: '/user-guide' },
+  { key: 'privacyPolicy', to: '/privacy-policy' },
   { key: 'testimonials', to: '/testimonials' },
   { key: 'sitemap', to: '/sitemap' },
   { key: 'login', to: '/login' },

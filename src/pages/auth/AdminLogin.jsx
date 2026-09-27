@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Shield, Lock, Mail, ArrowRight } from 'lucide-react';
+import { Shield, Lock, Mail, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Logo } from '../../components/Logo';
 import { Button } from '../../components/Button';
@@ -13,6 +13,7 @@ export default function AdminLogin() {
   const { setRole, showToast, setProfile } = useApp();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -75,21 +76,29 @@ export default function AdminLogin() {
             <div className="mt-1 relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cc-muted" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-cc-lime outline-none text-sm"
+                className="w-full pl-10 pr-11 py-3 rounded-xl border border-gray-200 focus:border-cc-lime outline-none text-sm"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-cc-muted hover:text-cc-forest transition"
+                aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
           <Button type="submit" disabled={loading} className="w-full !rounded-xl !py-3">
             {loading ? t('auth.entering') : <><span className="mr-2">{t('auth.enterPanel')}</span> <ArrowRight className="w-4 h-4" /></>}
           </Button>
         </form>
-        <p className="text-[11px] text-center text-cc-muted mt-4 bg-cc-mint rounded-lg py-2">
+        {/* <p className="text-[11px] text-center text-cc-muted mt-4 bg-cc-mint rounded-lg py-2">
           Demo: admin@campuscoin.app / admin123
-        </p>
+        </p> */}
         <Link to="/login" className="block text-center text-sm text-cc-muted mt-4 hover:text-cc-forest">
           ← Student login
         </Link>

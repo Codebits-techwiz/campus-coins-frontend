@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+import { translateDynamicText } from '../../utils/translateDynamicText';
 import { formatPkr } from '../../utils/currency';
 import { Link } from 'react-router-dom';
 import {
@@ -42,6 +44,7 @@ const getCatName = (t) => {
 };
 
 export default function Dashboard() {
+  const { t, i18n } = useTranslation();
   const { profile, balance, monthIncome, monthExpense, transactions, announcements, dashboardSummary, showToast } = useApp();
 
   const income  = dashboardSummary?.currentMonth?.income  ?? dashboardSummary?.totals?.income ?? monthIncome;
@@ -125,60 +128,39 @@ export default function Dashboard() {
           <h1 className="text-2xl sm:text-3xl font-extrabold text-cc-forest">
             {greeting}
           </h1>
-          <p className="text-cc-muted text-sm mt-1">Here&apos;s your {new Date().toLocaleString('default', { month: 'long' })} money snapshot</p>
+          <p className="text-cc-muted text-sm mt-1">{t('app.dashboard.subtitle')}</p>
         </div>
         <div className="flex gap-2">
           <Link to="/app/transactions">
             <Button className="!rounded-xl">
-              <Plus className="w-4 h-4" /> Quick Add
+              <Plus className="w-4 h-4" /> {t('app.dashboard.quickAdd')}
             </Button>
           </Link>
         </div>
       </div>
 
 
-      {(announcements || [])
-        .filter((a) => a.isActive !== false && a.active !== false)
-        .slice(0, 3)
-        .map((a) => (
-          <div
-            key={a._id || a.id}
-            className="bg-gradient-to-r from-emerald-50 via-cc-mint/70 to-emerald-50 border border-cc-lime/40 rounded-2xl p-4 shadow-sm flex items-start gap-3.5 transition hover:shadow-md"
-          >
-            <div className="p-2.5 bg-cc-forest text-cc-lime rounded-xl shrink-0 shadow-sm mt-0.5">
-              <Megaphone className="w-5 h-5" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-2">
-                <h3 className="font-bold text-cc-forest text-sm">{a.title}</h3>
-                <span className="text-[10px] bg-cc-forest text-white font-bold px-2.5 py-0.5 rounded-full shrink-0">
-                  Campus Announcement
-                </span>
-              </div>
-              <p className="text-xs text-cc-forest/80 mt-1 leading-relaxed">{a.message || a.body || a.desc}</p>
-            </div>
-          </div>
-        ))}
+
 
       <div className="grid sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-cc-muted uppercase">Balance</span>
+            <span className="text-xs font-bold text-cc-muted uppercase">{t('app.dashboard.balance')}</span>
             <Wallet className="w-4 h-4 text-cc-lime" />
           </div>
           <p className="text-3xl font-extrabold text-cc-forest">{formatPkr(bal)}</p>
-          <p className="text-xs text-cc-muted mt-1">Income − Expenses this month</p>
+          <p className="text-xs text-cc-muted mt-1">{t('app.dashboard.balanceFormula')}</p>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-cc-muted uppercase">Income</span>
+            <span className="text-xs font-bold text-cc-muted uppercase">{t('app.dashboard.income')}</span>
             <TrendingUp className="w-4 h-4 text-cc-lime" />
           </div>
           <p className="text-3xl font-extrabold text-cc-lime">{formatPkr(income)}</p>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-cc-muted uppercase">Expenses</span>
+            <span className="text-xs font-bold text-cc-muted uppercase">{t('app.dashboard.expenses')}</span>
             <TrendingDown className="w-4 h-4 text-red-500" />
           </div>
           <p className="text-3xl font-extrabold text-cc-ink">{formatPkr(expense)}</p>
@@ -188,7 +170,7 @@ export default function Dashboard() {
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-          <h2 className="font-bold text-cc-forest mb-4">Income vs Expense (6 months)</h2>
+          <h2 className="font-bold text-cc-forest mb-4">{t('app.dashboard.trendTitle')}</h2>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={trend6Months}>
@@ -203,9 +185,9 @@ export default function Dashboard() {
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-          <h2 className="font-bold text-cc-forest mb-1">This Month&apos;s Top Category</h2>
+          <h2 className="font-bold text-cc-forest mb-1">{t('app.dashboard.topCategory')}</h2>
           <p className="text-sm text-cc-muted mb-3">
-            {topCategory ? `${topCategory.name} - ${formatPkr(topCategory.amount || topCategory.value || 0)}` : 'No expenses yet'}
+            {topCategory ? `${topCategory.name} - ${formatPkr(topCategory.amount || topCategory.value || 0)}` : t('app.dashboard.noTransactions')}
           </p>
           <div className="h-44">
             {pieData.length > 0 ? (
@@ -221,7 +203,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
             ) : (
               <div className="h-full flex items-center justify-center text-sm text-cc-muted">
-                Add expenses to see the chart
+                {t('app.dashboard.noTransactions')}
               </div>
             )}
           </div>
@@ -233,15 +215,15 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-bold text-cc-forest flex items-center gap-2">
-              <Lightbulb className="w-5 h-5 text-cc-lime" /> Saving Tips
+              <Lightbulb className="w-5 h-5 text-cc-lime" /> {t('app.dashboard.aiTipsTitle')}
             </h2>
             <Link to="/app/insights" className="text-xs font-semibold text-cc-lime flex items-center gap-1">
-              View all <ArrowRight className="w-3 h-3" />
+              {t('app.dashboard.viewAll')} <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
           <div className="space-y-3">
             {localTips.length === 0 ? (
-              <p className="text-sm text-cc-muted text-center py-4">No tips available yet.</p>
+              <p className="text-sm text-cc-muted text-center py-4">{t('app.insights.noTips')}</p>
             ) : (
               localTips.map((tip) => {
                 const isPinned = tip.isPinned || tip.pinned;
@@ -249,16 +231,15 @@ export default function Dashboard() {
                 return (
                   <div key={tipId} className="flex gap-3 p-3 rounded-xl bg-cc-mint-soft border border-cc-mint items-start">
                     <div className="flex-1">
-                      <span className="text-[10px] font-bold uppercase text-cc-lime">{tip.impact} impact</span>
-                      <p className="text-sm text-cc-ink mt-0.5">{tip.text}</p>
-                      <p className="text-[10px] text-cc-muted italic mt-1 leading-tight">Notice: Advisory suggestion, not certified advice.</p>
+                      <span className="text-[10px] font-bold uppercase text-cc-lime">{translateDynamicText(tip.impact, i18n.language)} {t('app.insights.impact')}</span>
+                      <p className="text-sm text-cc-ink mt-0.5">{translateDynamicText(tip.text, i18n.language)}</p>
                     </div>
                     <div className="flex gap-1 shrink-0">
                       <button
                         type="button"
                         onClick={() => handleToggleTipPin(tipId)}
                         className={`p-1.5 rounded-lg ${isPinned ? 'bg-cc-mint text-cc-lime' : 'text-cc-muted hover:bg-gray-50'}`}
-                        title={isPinned ? 'Unpin' : 'Pin tip'}
+                        title={isPinned ? 'Unpin' : t('app.dashboard.pinTip')}
                       >
                         <Pin className={`w-3.5 h-3.5 ${isPinned ? 'fill-current' : ''}`} />
                       </button>
@@ -266,7 +247,7 @@ export default function Dashboard() {
                         type="button"
                         onClick={() => handleDismissTip(tipId)}
                         className="p-1.5 rounded-lg text-cc-muted hover:bg-red-50 hover:text-red-500"
-                        title="Dismiss"
+                        title={t('app.dashboard.dismissTip')}
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -280,20 +261,20 @@ export default function Dashboard() {
 
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-cc-forest">Budget vs Actual</h2>
+            <h2 className="font-bold text-cc-forest">{t('app.budgets.title')}</h2>
             <Link to="/app/budgets" className="text-xs font-semibold text-cc-lime">
-              Manage
+              {t('student.actions')}
             </Link>
           </div>
           {alerts.length > 0 && (
             <div className="mb-3 flex items-start gap-2 text-amber-800 bg-amber-50 rounded-xl px-3 py-2 text-xs">
               <AlertTriangle className="w-4 h-4 shrink-0" />
-              {alerts.length} categor{alerts.length === 1 ? 'y' : 'ies'} near or over budget
+              {alerts.length} {t('app.budgets.nearLimit')}
             </div>
           )}
           <div className="space-y-3">
             {(budgets || []).length === 0 ? (
-              <p className="text-sm text-cc-muted text-center py-4">No budgets set yet.</p>
+              <p className="text-sm text-cc-muted text-center py-4">{t('app.budgets.noBudgets')}</p>
             ) : (
               (budgets || []).map((b) => {
                 const spent = b.currentSpent || 0;
@@ -327,66 +308,40 @@ export default function Dashboard() {
 
 
       <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-        <h2 className="font-bold text-cc-forest mb-4">Jump Back In (Recent Activity)</h2>
-        {activities.length === 0 ? (
-          <p className="text-sm text-cc-muted text-center py-4">No recent activity found.</p>
-        ) : (
-          <div className="space-y-3">
-            {activities.slice(0, 4).map((act) => (
-              <div key={act.logId || act._id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-50 hover:bg-gray-50 transition">
-                <div className="p-2 bg-cc-mint text-cc-forest rounded-full">
-                  {act.transaction ? <ArrowRight className="w-4 h-4" /> : <Pin className="w-4 h-4" />}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-cc-ink">
-                    {act.action === 'create' ? 'Created' : 'Edited'} {act.transaction ? 'Transaction' : 'Category'}
-                  </p>
-                  <p className="text-xs text-cc-muted">
-                    {act.transaction ? act.transaction.description : ''} - {new Date(act.at).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-
-      <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-bold text-cc-forest">Recent Transactions</h2>
+          <h2 className="font-bold text-cc-forest">{t('app.dashboard.recentTitle')}</h2>
           <Link to="/app/transactions" className="text-xs font-semibold text-cc-lime">
-            See all
+            {t('app.dashboard.viewAll')}
           </Link>
         </div>
         {recentTx.length === 0 ? (
-          <p className="text-sm text-cc-muted text-center py-4">No transactions yet. <Link to="/app/transactions" className="text-cc-lime font-semibold">Add your first one!</Link></p>
+          <p className="text-sm text-cc-muted text-center py-4">{t('app.dashboard.noTransactions')} <Link to="/app/transactions" className="text-cc-lime font-semibold">{t('app.transactions.addTransaction')}</Link></p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs text-cc-muted border-b border-gray-100">
-                  <th className="pb-2 font-semibold">Date</th>
-                  <th className="pb-2 font-semibold">Description</th>
-                  <th className="pb-2 font-semibold">Category</th>
-                  <th className="pb-2 font-semibold text-right">Amount</th>
+                  <th className="pb-2 font-semibold">{t('app.transactions.date')}</th>
+                  <th className="pb-2 font-semibold">{t('app.transactions.note')}</th>
+                  <th className="pb-2 font-semibold">{t('app.transactions.category')}</th>
+                  <th className="pb-2 font-semibold text-right">{t('app.transactions.amount')}</th>
                 </tr>
               </thead>
               <tbody>
-                {recentTx.map((t) => (
-                  <tr key={getTxId(t)} className="border-b border-gray-50">
+                {recentTx.map((tItem) => (
+                  <tr key={getTxId(tItem)} className="border-b border-gray-50">
                     <td className="py-2.5 text-cc-muted whitespace-nowrap">
-                      {t.date ? new Date(t.date).toLocaleDateString() : '-'}
+                      {tItem.date ? new Date(tItem.date).toLocaleDateString() : '-'}
                     </td>
-                    <td className="py-2.5 font-medium text-cc-ink">{t.description}</td>
+                    <td className="py-2.5 font-medium text-cc-ink">{tItem.description}</td>
                     <td className="py-2.5">
                       <span className="text-xs bg-cc-mint text-cc-forest px-2 py-0.5 rounded-full font-medium">
-                        {getCatName(t)}
+                        {getCatName(tItem)}
                       </span>
                     </td>
-                    <td className={`py-2.5 text-right font-bold ${t.type === 'income' ? 'text-cc-lime' : 'text-cc-ink'}`}>
-                      {t.type === 'income' ? '+' : '−'}
-                      {formatPkr(t.amount)}
+                    <td className={`py-2.5 text-right font-bold ${tItem.type === 'income' ? 'text-cc-lime' : 'text-cc-ink'}`}>
+                      {tItem.type === 'income' ? '+' : '−'}
+                      {formatPkr(tItem.amount)}
                     </td>
                   </tr>
                 ))}
