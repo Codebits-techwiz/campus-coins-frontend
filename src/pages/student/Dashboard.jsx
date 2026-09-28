@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
 import { translateDynamicText } from '../../utils/translateDynamicText';
-import { formatPkr } from '../../utils/currency';
 import { Link } from 'react-router-dom';
 import {
   Plus,
@@ -189,7 +188,7 @@ export default function Dashboard() {
             <span className="text-xs font-bold text-cc-muted uppercase">{t('app.dashboard.balance')}</span>
             <Wallet className="w-4 h-4 text-cc-lime" />
           </div>
-          <p className="text-3xl font-extrabold text-cc-forest">{formatPkr(bal)}</p>
+          <p className="text-3xl font-extrabold text-cc-forest">{formatMoney(bal, profile?.currency)}</p>
           <p className="text-xs text-cc-muted mt-1">{t('app.dashboard.balanceFormula')}</p>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
@@ -197,14 +196,14 @@ export default function Dashboard() {
             <span className="text-xs font-bold text-cc-muted uppercase">{t('app.dashboard.income')}</span>
             <TrendingUp className="w-4 h-4 text-cc-lime" />
           </div>
-          <p className="text-3xl font-extrabold text-cc-lime">{formatPkr(income)}</p>
+          <p className="text-3xl font-extrabold text-cc-lime">{formatMoney(income, profile?.currency)}</p>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold text-cc-muted uppercase">{t('app.dashboard.expenses')}</span>
             <TrendingDown className="w-4 h-4 text-red-500" />
           </div>
-          <p className="text-3xl font-extrabold text-cc-ink">{formatPkr(expense)}</p>
+          <p className="text-3xl font-extrabold text-cc-ink">{formatMoney(expense, profile?.currency)}</p>
         </div>
       </div>
 
@@ -217,7 +216,7 @@ export default function Dashboard() {
               <BarChart data={trend6Months}>
                 <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip formatter={(value) => formatPkr(value)} />
+                <Tooltip formatter={(value) => formatMoney(value, profile?.currency)} />
                 <Bar dataKey="income" fill="#5CB85C" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="expense" fill="#0B3D2E" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -228,7 +227,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
           <h2 className="font-bold text-cc-forest mb-1">{t('app.dashboard.topCategory')}</h2>
           <p className="text-sm text-cc-muted mb-3">
-            {topCategory ? `${topCategory.name} - ${formatPkr(topCategory.amount || topCategory.value || 0)}` : t('app.dashboard.noTransactions')}
+            {topCategory ? `${topCategory.name} - ${formatMoney(topCategory.amount || topCategory.value || 0, profile?.currency)}` : t('app.dashboard.noTransactions')}
           </p>
           <div className="h-44">
             {pieData.length > 0 ? (
@@ -338,7 +337,7 @@ export default function Dashboard() {
                         {b.category?.name}
                       </span>
                       <span className={over ? 'text-red-600 font-bold' : 'text-cc-muted'}>
-                        {formatPkr(spent)} / {formatPkr(limit)}
+                        {formatMoney(spent, profile?.currency)} / {formatMoney(limit, profile?.currency)}
                       </span>
                     </div>
                     <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
@@ -391,7 +390,7 @@ export default function Dashboard() {
                       </td>
                       <td className={`py-2.5 text-right font-bold ${tItem.type === 'income' ? 'text-cc-lime' : 'text-cc-ink'}`}>
                         {tItem.type === 'income' ? '+' : '−'}
-                        {formatPkr(tItem.amount)}
+                        {formatMoney(tItem.amount, profile?.currency)}
                       </td>
                     </tr>
                   ))}
@@ -435,7 +434,7 @@ export default function Dashboard() {
                       </p>
                     </div>
                     <span className={`text-sm font-bold shrink-0 ${tx.type === 'income' ? 'text-cc-lime' : 'text-cc-ink'}`}>
-                      {tx.type === 'income' ? '+' : '−'}{formatPkr(tx.amount || 0)}
+                      {tx.type === 'income' ? '+' : '−'}{formatMoney(tx.amount || 0, profile?.currency)}
                     </span>
                   </li>
                 );

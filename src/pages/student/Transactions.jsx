@@ -5,7 +5,6 @@ import { Plus, Pencil, Trash2, Sparkles, X, Search, FileUp, UploadCloud, Camera,
 import api from '../../api';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../../components/Button';
-import { formatPkr } from '../../utils/currency';
 import { formatMoney } from '../../utils/formatMoney';
 import { CategoryIcon } from '../../utils/categoryIcons';
 
@@ -367,7 +366,7 @@ export default function Transactions() {
                 >
                   <CategoryIcon iconKey={tx.category?.icon} color={tx.category?.color} className="w-3.5 h-3.5 shrink-0" />
                   <span>{tx.name}</span>
-                  <span className="text-cc-muted font-semibold">{formatPkr(Number(tx.amount))}</span>
+                  <span className="text-cc-muted font-semibold">{formatMoney(Number(tx.amount), profile?.currency)}</span>
                 </button>
                 <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition bg-white/90 px-1 rounded-lg">
                   <button
@@ -899,7 +898,7 @@ export default function Transactions() {
                 <div className="flex justify-between pb-3 border-b border-gray-100">
                   <span className="text-cc-muted text-sm font-semibold">{t('app.transactions.amount')}</span>
                   <span className={`font-bold ${viewData.type === 'income' ? 'text-cc-lime' : 'text-red-500'}`}>
-                    {viewData.type === 'income' ? '+' : '-'}{formatPkr(Number(viewData.amount))}
+                    {viewData.type === 'income' ? '+' : '-'}{formatMoney(Number(viewData.amount), profile?.currency)}
                   </span>
                 </div>
                 <div className="flex justify-between pb-3 border-b border-gray-100">

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Target, Bell, Plus, Trash2, CheckCheck } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../../components/Button';
-import { formatPkr } from '../../utils/currency';
+import { formatMoney } from '../../utils/formatMoney';
 import { CategoryIcon } from '../../utils/categoryIcons';
 
 export default function Budgets() {
@@ -170,9 +170,9 @@ export default function Budgets() {
                   <div className="flex items-center gap-3">
                     <div className="text-right">
                       <p className="font-extrabold text-cc-ink">
-                        {formatPkr(spent)}{' '}
+                        {formatMoney(spent, profile?.currency)}{' '}
                         <span className="text-cc-muted font-medium text-sm">
-                          / {formatPkr(lim)}
+                          / {formatMoney(lim, profile?.currency)}
                         </span>
                       </p>
                       {near && (

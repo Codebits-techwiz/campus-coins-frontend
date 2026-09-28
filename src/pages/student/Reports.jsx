@@ -16,7 +16,7 @@ import {
 import api from '../../api';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../../components/Button';
-import { formatPkr } from '../../utils/currency';
+import { formatMoney } from '../../utils/formatMoney';
 import { translateDynamicText } from '../../utils/translateDynamicText';
 
 const COLORS = ['#5CB85C', '#0B3D2E', '#F5C518', '#3D9B3D', '#95cea4', '#145A43', '#62b375'];
@@ -35,7 +35,7 @@ function buildMonthOptions(count = 12) {
 
 export default function Reports() {
   const { t, i18n } = useTranslation();
-  const { showToast, categories } = useApp();
+  const { showToast, categories, profile } = useApp();
 
   const monthOptions = useMemo(() => buildMonthOptions(12), []);
   const [month, setMonth] = useState(monthOptions[0]?.value || '');
@@ -351,7 +351,7 @@ export default function Reports() {
                           <Cell key={i} fill={COLORS[i % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value) => formatPkr(value)} />
+                      <Tooltip formatter={(value) => formatMoney(value, profile?.currency)} />
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (
@@ -370,7 +370,7 @@ export default function Reports() {
                     <BarChart data={trend6Months}>
                       <XAxis dataKey="month" />
                       <YAxis />
-                      <Tooltip formatter={(value) => formatPkr(value)} />
+                      <Tooltip formatter={(value) => formatMoney(value, profile?.currency)} />
                       <Bar dataKey="income" fill="#5CB85C" name={t('app.dashboard.income')} />
                       <Bar dataKey="expense" fill="#0B3D2E" name={t('app.dashboard.expenses')} />
                     </BarChart>
@@ -389,11 +389,11 @@ export default function Reports() {
             <div className="flex gap-10">
               <div>
                 <p className="text-xs text-cc-muted uppercase font-bold mb-1">{t('app.reports.dailyAvg')}</p>
-                <p className="text-2xl font-extrabold text-cc-ink">{formatPkr(dailyWeekly.dailyAverage)}</p>
+                <p className="text-2xl font-extrabold text-cc-ink">{formatMoney(dailyWeekly.dailyAverage, profile?.currency)}</p>
               </div>
               <div>
                 <p className="text-xs text-cc-muted uppercase font-bold mb-1">{t('app.reports.weeklyAvg')}</p>
-                <p className="text-2xl font-extrabold text-cc-ink">{formatPkr(dailyWeekly.weeklyAverage)}</p>
+                <p className="text-2xl font-extrabold text-cc-ink">{formatMoney(dailyWeekly.weeklyAverage, profile?.currency)}</p>
               </div>
             </div>
           </div>
