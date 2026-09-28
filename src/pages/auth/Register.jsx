@@ -22,6 +22,7 @@ import { Button } from '../../components/Button';
 import { useApp } from '../../context/AppContext';
 import api from '../../api';
 import { PrivacyModal } from '../../components/PrivacyModal';
+import { getFriendlyError } from '../../utils/friendlyError';
 import {
   validateName,
   validateEmail,
@@ -50,7 +51,6 @@ export default function Register() {
   const [resending, setResending] = useState(false);
   const [step, setStep] = useState('form'); // 'form' | 'otp'
   const [otp, setOtp] = useState('');
-  const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -60,9 +60,9 @@ export default function Register() {
     email: '',
     password: '',
     confirmPassword: '',
-    academicYear: 'Year 1',
-    monthlyAllowance: '40000',
-    savingsGoal: '10000',
+    academicYear: '',
+    monthlyAllowance: '',
+    savingsGoal: '',
     currency: 'PKR',
     agreePrivacy: false,
   });
@@ -87,6 +87,7 @@ export default function Register() {
       email: validateEmail(form.email),
       password: validatePassword(form.password),
       confirmPassword: validateConfirmPassword(form.password, form.confirmPassword),
+      academicYear: form.academicYear ? undefined : 'required',
       monthlyAllowance: validatePositiveNumber(form.monthlyAllowance),
       savingsGoal: validatePositiveNumber(form.savingsGoal),
       agreePrivacy: form.agreePrivacy
@@ -99,7 +100,6 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     if (!validateAll()) return;
 
     setLoading(true);
@@ -121,7 +121,7 @@ export default function Register() {
         showToast(res.data.message || 'OTP code sent to your email!', 'success');
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed');
+      showToast(getFriendlyError(err, 'We couldn’t create your account. Please try again.'), 'error');
     } finally {
       setLoading(false);
     }
@@ -129,9 +129,8 @@ export default function Register() {
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
-    setError('');
     if (!otp || otp.trim().length !== 6) {
-      setError('Please enter a 6-digit verification code.');
+      showToast('Please enter a 6-digit verification code.', 'error');
       return;
     }
 
@@ -152,14 +151,13 @@ export default function Register() {
         }
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'OTP verification failed');
+      showToast(getFriendlyError(err, 'That code didn’t work. Please try again.'), 'error');
     } finally {
       setOtpLoading(false);
     }
   };
 
   const handleResendOtp = async () => {
-    setError('');
     setResending(true);
     try {
       const res = await api.post('/api/auth/resend-otp', { email: form.email.trim() });
@@ -167,7 +165,7 @@ export default function Register() {
         showToast('A new OTP verification code has been sent to your email.', 'success');
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to resend OTP');
+      showToast(getFriendlyError(err, 'We couldn’t resend the code. Please try again.'), 'error');
     } finally {
       setResending(false);
     }
@@ -194,12 +192,6 @@ export default function Register() {
               : t('auth.registerSub')}
           </p>
         </div>
-
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm text-center">
-            {error}
-          </div>
-        )}
 
         {step === 'otp' ? (
           <form onSubmit={handleVerifyOtp} className="space-y-4">
@@ -237,7 +229,6 @@ export default function Register() {
                 type="button"
                 onClick={() => {
                   setStep('form');
-                  setError('');
                 }}
                 className="inline-flex items-center gap-1 text-cc-muted hover:text-cc-forest font-medium"
               >
@@ -391,8 +382,15 @@ export default function Register() {
                 <select
                   value={form.academicYear}
                   onChange={set('academicYear')}
-                  className="w-full pl-10 pr-3 py-3 rounded-xl border border-gray-200 focus:border-cc-lime outline-none text-sm appearance-none bg-white"
+                  className={`w-full pl-10 pr-3 py-3 rounded-xl border outline-none text-sm appearance-none bg-white focus:ring-2 focus:ring-cc-lime/20 ${
+                    fieldErrors.academicYear
+                      ? 'border-red-400'
+                      : 'border-gray-200 focus:border-cc-lime'
+                  }`}
                 >
+                  <option value="" disabled>
+                    Select academic year
+                  </option>
                   {YEARS.map((y) => (
                     <option key={y} value={y}>
                       {y}
@@ -400,12 +398,15 @@ export default function Register() {
                   ))}
                 </select>
               </div>
+              {fieldErrors.academicYear && (
+                <p className="mt-1 text-xs text-red-500">{errMsg(fieldErrors.academicYear)}</p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-semibold text-cc-muted uppercase tracking-wide">
-                  {t('auth.monthlyAllowance')}
+                  {t('auth.monthlyAllowance', { currency: form.currency || 'PKR' })}
                 </label>
                 <div className="mt-1 relative">
                   <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cc-muted" />
@@ -414,6 +415,7 @@ export default function Register() {
                     min="0"
                     value={form.monthlyAllowance}
                     onChange={set('monthlyAllowance')}
+                    placeholder="40000"
                     className={`w-full pl-10 pr-3 py-3 rounded-xl border outline-none text-sm focus:ring-2 focus:ring-cc-lime/20 ${
                       fieldErrors.monthlyAllowance
                         ? 'border-red-400'
@@ -427,7 +429,7 @@ export default function Register() {
               </div>
               <div>
                 <label className="text-xs font-semibold text-cc-muted uppercase tracking-wide">
-                  {t('auth.savingsGoal')}
+                  {t('auth.savingsGoal', { currency: form.currency || 'PKR' })}
                 </label>
                 <div className="mt-1 relative">
                   <Target className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cc-muted" />
@@ -436,6 +438,7 @@ export default function Register() {
                     min="0"
                     value={form.savingsGoal}
                     onChange={set('savingsGoal')}
+                    placeholder="10000"
                     className={`w-full pl-10 pr-3 py-3 rounded-xl border outline-none text-sm focus:ring-2 focus:ring-cc-lime/20 ${
                       fieldErrors.savingsGoal
                         ? 'border-red-400'

@@ -3,11 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { Target, Bell, Plus, Trash2, CheckCheck } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../../components/Button';
-import { formatMoney } from '../../utils/formatMoney';
+import { CategorySelect } from '../../components/CategorySelect';
+import { formatMoney, toYearMonthLocal } from '../../utils/formatMoney';
 import { CategoryIcon } from '../../utils/categoryIcons';
 
 export default function Budgets() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const {
     budgets,
     addBudget,
@@ -25,7 +26,7 @@ export default function Budgets() {
   const [limit, setLimit] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const currentMonth = new Date().toISOString().slice(0, 7);
+  const currentMonth = toYearMonthLocal();
   const monthLabel = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
 
   const expenseCats = categories.filter((c) => c.type === 'expense');
@@ -109,22 +110,19 @@ export default function Budgets() {
       >
         <div className="flex-1 min-w-[160px]">
           <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.transactions.category')}</label>
-          <select
+          <CategorySelect
             required
+            categories={expenseCats}
             value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-            className="mt-1 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-cc-lime"
-          >
-            <option value="">{t('app.transactions.select')}</option>
-            {expenseCats.map((c) => (
-              <option key={c._id || c.id} value={c._id || c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+            onChange={setCategoryId}
+            placeholder={t('app.transactions.select')}
+            language={i18n.language}
+          />
         </div>
         <div className="w-36">
-          <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.budgets.limitPkr')}</label>
+          <label className="text-xs font-semibold text-cc-muted uppercase">
+            {t('app.budgets.limitLabel', { currency: profile?.currency || 'PKR' })}
+          </label>
           <input
             type="number"
             step="0.01"

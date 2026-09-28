@@ -189,7 +189,13 @@ export default function Categories() {
       <section>
         <h2 className="font-bold text-cc-forest mb-3">{t('app.categories.defaultsTitle')}</h2>
         <p className="text-xs text-cc-muted mb-3">{t('app.categories.defaultsHint')}</p>
-        <CatList items={defaults} allowEdit={false} />
+        {defaults.length === 0 ? (
+          <p className="text-sm text-cc-muted bg-white rounded-xl border border-dashed border-gray-200 p-6 text-center">
+            {t('app.categories.noCategories')}
+          </p>
+        ) : (
+          <CatList items={defaults} allowEdit={false} />
+        )}
       </section>
     </div>
   );

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Logo } from '../../components/Logo';
 import { Button } from '../../components/Button';
 import { useApp } from '../../context/AppContext';
+import { getFriendlyError } from '../../utils/friendlyError';
 import api from '../../api';
 
 export default function ForgotPassword() {
@@ -21,7 +22,6 @@ export default function ForgotPassword() {
   
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
-  const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
   // Step 1: Send OTP code to email
@@ -29,7 +29,6 @@ export default function ForgotPassword() {
     e.preventDefault();
     if (!email) return;
     setLoading(true);
-    setError('');
 
     try {
       const res = await api.post('/api/auth/forgot-password', { email: email.trim() });
@@ -38,7 +37,7 @@ export default function ForgotPassword() {
         showToast('Password reset OTP code has been sent to your email.', 'success');
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to send OTP code');
+      showToast(getFriendlyError(err, 'We couldn’t send the code. Please try again.'), 'error');
     } finally {
       setLoading(false);
     }
@@ -46,7 +45,6 @@ export default function ForgotPassword() {
 
   // Step 2: Resend OTP code
   const handleResendOtp = async () => {
-    setError('');
     setResending(true);
     try {
       const res = await api.post('/api/auth/forgot-password', { email: email.trim() });
@@ -54,7 +52,7 @@ export default function ForgotPassword() {
         showToast('A fresh OTP code has been sent to your email.', 'success');
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to resend OTP code');
+      showToast(getFriendlyError(err, 'We couldn’t resend the code. Please try again.'), 'error');
     } finally {
       setResending(false);
     }
@@ -63,18 +61,17 @@ export default function ForgotPassword() {
   // Step 3: Reset password with OTP
   const handleResetPassword = async (e) => {
     e.preventDefault();
-    setError('');
 
     if (!otp || otp.trim().length !== 6) {
-      setError('Please enter a valid 6-digit OTP code.');
+      showToast('Please enter a valid 6-digit OTP code.', 'error');
       return;
     }
     if (!newPassword || newPassword.length < 6) {
-      setError('Password must be at least 6 characters.');
+      showToast('Password must be at least 6 characters.', 'error');
       return;
     }
     if (newPassword !== confirmPassword) {
-      setError('Passwords do not match.');
+      showToast('Passwords do not match.', 'error');
       return;
     }
 
@@ -94,7 +91,7 @@ export default function ForgotPassword() {
         }, 2500);
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Password reset failed. Invalid or expired OTP.');
+      showToast(getFriendlyError(err, 'We couldn’t reset your password. The code may be wrong or expired.'), 'error');
     } finally {
       setLoading(false);
     }
@@ -122,12 +119,6 @@ export default function ForgotPassword() {
             <p className="text-sm text-cc-muted text-center mt-1 mb-6">
               Enter the 6-digit OTP code sent to <strong>{email}</strong>
             </p>
-
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm text-center">
-                {error}
-              </div>
-            )}
 
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div>
@@ -193,7 +184,6 @@ export default function ForgotPassword() {
                   type="button"
                   onClick={() => {
                     setStep('email');
-                    setError('');
                   }}
                   className="inline-flex items-center gap-1 text-cc-muted hover:text-cc-forest font-medium"
                 >
@@ -218,12 +208,6 @@ export default function ForgotPassword() {
             <p className="text-sm text-cc-muted text-center mt-1 mb-6">
               Enter your registered email address to receive a 6-digit password reset OTP code.
             </p>
-
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm text-center">
-                {error}
-              </div>
-            )}
 
             <form onSubmit={handleSendOtp} className="space-y-4">
               <div>

@@ -4,8 +4,10 @@ import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../../components/Button';
+import { CategorySelect } from '../../components/CategorySelect';
 import { formatMoney } from '../../utils/formatMoney';
 import { translateDynamicText } from '../../utils/translateDynamicText';
+import { CategoryIcon } from '../../utils/categoryIcons';
 
 const emptyForm = {
   categoryId: '',
@@ -143,7 +145,13 @@ export default function Recurring() {
                   <tr key={r._id} className="border-t border-gray-50 hover:bg-cc-mint-soft/50">
                     <td className="px-4 py-3 font-medium">{r.description}</td>
                     <td className="px-4 py-3">
-                      <span className="text-xs bg-cc-mint text-cc-forest px-2 py-0.5 rounded-full">
+                      <span className="inline-flex items-center gap-1.5 text-xs bg-cc-mint text-cc-forest px-2 py-0.5 rounded-full">
+                        <CategoryIcon
+                          iconKey={r.category?.icon}
+                          color={r.category?.color}
+                          className="w-3 h-3"
+                          size={20}
+                        />
                         {translateDynamicText(getCatName(r), i18n.language)}
                       </span>
                     </td>
@@ -198,7 +206,9 @@ export default function Recurring() {
                 </select>
               </div>
               <div>
-                <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.transactions.amount')} ({profile?.currency || 'USD'})</label>
+                <label className="text-xs font-semibold text-cc-muted uppercase">
+                  {t('app.transactions.amount')} ({profile?.currency || 'PKR'})
+                </label>
                 <input
                   type="number"
                   step="0.01"
@@ -222,19 +232,14 @@ export default function Recurring() {
               </div>
               <div>
                 <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.transactions.category')}</label>
-                <select
+                <CategorySelect
                   required
+                  categories={categories.filter((c) => c.type === form.type)}
                   value={form.categoryId}
-                  onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
-                  className="mt-1 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-cc-lime"
-                >
-                  <option value="">{t('app.transactions.select')}</option>
-                  {categories.filter(c => c.type === form.type).map((c) => (
-                    <option key={c._id || c.id} value={c._id || c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(id) => setForm({ ...form, categoryId: id })}
+                  placeholder={t('app.transactions.select')}
+                  language={i18n.language}
+                />
               </div>
               <div>
                 <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.recurring.frequency')}</label>

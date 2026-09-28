@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useApp } from '../context/AppContext';
 import { faqItems } from '../data/mockData';
 import api from '../api';
+import { getFriendlyError } from '../utils/friendlyError';
 
 function makeId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -56,9 +57,10 @@ export function FaqChatbot() {
         "I'm having trouble connecting right now - please check our FAQ section below or try again shortly.";
       setMessages((prev) => [...prev, { id: makeId(), role: 'bot', text: botReply }]);
     } catch (err) {
-      const fallbackMsg =
-        err.response?.data?.error ||
-        "I'm having trouble connecting right now - please check our FAQ section below or try again shortly.";
+      const fallbackMsg = getFriendlyError(
+        err,
+        "I'm having trouble connecting right now. Please check our FAQ or try again shortly."
+      );
       setMessages((prev) => [...prev, { id: makeId(), role: 'bot', text: fallbackMsg }]);
     } finally {
       setLoading(false);

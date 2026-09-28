@@ -16,7 +16,8 @@ import {
 import api from '../../api';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../../components/Button';
-import { formatMoney } from '../../utils/formatMoney';
+import { CategorySelect } from '../../components/CategorySelect';
+import { formatMoney, toYearMonthLocal } from '../../utils/formatMoney';
 import { translateDynamicText } from '../../utils/translateDynamicText';
 
 const COLORS = ['#5CB85C', '#0B3D2E', '#F5C518', '#3D9B3D', '#95cea4', '#145A43', '#62b375'];
@@ -122,7 +123,7 @@ export default function Reports() {
     fetchReports();
   }, [queryParams, i18n.language, typeFilter]);
 
-  const exportMonth = month || new Date().toISOString().slice(0, 7);
+  const exportMonth = month || toYearMonthLocal();
 
   const handleExportPdf = async () => {
     try {
@@ -298,22 +299,17 @@ export default function Reports() {
               <option value="income">{t('app.transactions.income')}</option>
             </select>
           </div>
-          <div>
+          <div className="min-w-[200px]">
             <label className="text-[11px] font-semibold text-cc-muted uppercase">
               {typeFilter === 'income' ? t('app.reports.incomeSource') : t('app.reports.category')}
             </label>
-            <select
+            <CategorySelect
+              categories={filteredCategories}
               value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-              className="mt-1 block px-3 py-2 rounded-xl border border-gray-200 text-sm bg-white min-w-[180px]"
-            >
-              <option value="">{t('app.transactions.allCategories')}</option>
-              {filteredCategories.map((c) => (
-                <option key={c._id || c.id} value={c._id || c.id}>
-                  {translateDynamicText(c.name, i18n.language)}
-                </option>
-              ))}
-            </select>
+              onChange={setCategoryId}
+              placeholder={t('app.transactions.allCategories')}
+              language={i18n.language}
+            />
           </div>
           {(dateFrom || dateTo || categoryId || typeFilter !== 'expense') && (
             <button

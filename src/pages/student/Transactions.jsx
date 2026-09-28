@@ -5,19 +5,21 @@ import { Plus, Pencil, Trash2, Sparkles, X, Search, FileUp, UploadCloud, Camera,
 import api from '../../api';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../../components/Button';
-import { formatMoney } from '../../utils/formatMoney';
+import { CategorySelect } from '../../components/CategorySelect';
+import { formatMoney, toDateInputLocal } from '../../utils/formatMoney';
 import { CategoryIcon } from '../../utils/categoryIcons';
+import { getFriendlyError } from '../../utils/friendlyError';
 
 const empty = {
   type: 'expense',
   categoryId: '',
   amount: '',
   description: '',
-  date: new Date().toISOString().slice(0, 10),
+  date: toDateInputLocal(),
 };
 
 export default function Transactions() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const {
     transactions,
@@ -27,6 +29,7 @@ export default function Transactions() {
     deleteTransaction,
     showToast,
     profile,
+    refreshAllAppData,
   } = useApp();
 
   const [editingTemplate, setEditingTemplate] = useState(null);
@@ -50,7 +53,6 @@ export default function Transactions() {
   const [csvPreview, setCsvPreview] = useState(null);
   const [csvFile, setCsvFile] = useState(null);
   const [csvUploading, setCsvUploading] = useState(false);
-  const [csvError, setCsvError] = useState('');
 
   const [ocrUploading, setOcrUploading] = useState(false);
 
@@ -60,7 +62,6 @@ export default function Transactions() {
       setShowForm(false);
       setCsvPreview(null);
       setCsvFile(null);
-      setCsvError('');
       const next = new URLSearchParams(searchParams);
       next.delete('import');
       setSearchParams(next, { replace: true });
@@ -116,7 +117,7 @@ export default function Transactions() {
       categoryId: getCatId(t) || '',
       amount: String(t.amount),
       description: t.name,
-      date: new Date().toISOString().slice(0, 10),
+      date: toDateInputLocal(),
     });
     setShowForm(true);
     setShowCsvForm(false);
@@ -222,7 +223,6 @@ export default function Transactions() {
     if (!file) return;
     setCsvFile(file);
     setCsvUploading(true);
-    setCsvError('');
     try {
       const formData = new FormData();
       formData.append('file', file);
@@ -232,10 +232,10 @@ export default function Transactions() {
       if (res.data.success && res.data.data?.preview?.length > 0) {
         setCsvPreview(res.data.data.preview);
       } else {
-        setCsvError('No valid rows found in CSV.');
+        showToast('No valid rows found in CSV.', 'error');
       }
     } catch (err) {
-      setCsvError(err.response?.data?.error || 'Failed to parse CSV');
+      showToast(getFriendlyError(err, 'We couldn’t read that CSV file. Please check the format and try again.'), 'error');
     } finally {
       setCsvUploading(false);
       e.target.value = '';
@@ -255,21 +255,25 @@ export default function Transactions() {
     for (const row of csvPreview) {
       const catId = row.categoryId || row.aiSuggestedCategory;
       if (!catId) {
-        setCsvError('Please assign a category to all rows.');
+        showToast('Please assign a category to all rows.', 'error');
         return;
       }
       row.categoryId = catId; // Set final category ID
     }
     
     setCsvUploading(true);
-    setCsvError('');
     try {
       const res = await api.post('/api/transactions/import-csv/confirm', { rows: csvPreview });
       if (res.data.success) {
-        window.location.reload(); // Reload to refresh transactions & stats
+        await refreshAllAppData();
+        setShowCsvForm(false);
+        setCsvPreview(null);
+        setCsvFile(null);
+        showToast(res.data.message || 'Transactions imported successfully', 'success');
       }
     } catch (err) {
-      setCsvError(err.response?.data?.error || 'Failed to import CSV');
+      showToast(getFriendlyError(err, 'We couldn’t import those transactions. Please try again.'), 'error');
+    } finally {
       setCsvUploading(false);
     }
   };
@@ -290,7 +294,7 @@ export default function Transactions() {
         let formattedDate = empty.date;
         if (date) {
             try {
-                formattedDate = new Date(date).toISOString().slice(0, 10);
+                formattedDate = toDateInputLocal(new Date(date));
             } catch(e) {}
         }
         setForm({
@@ -341,7 +345,7 @@ export default function Transactions() {
               <Camera className="w-4 h-4" /> {ocrUploading ? t('app.transactions.scanning') : t('app.transactions.scanReceipt')}
             </label>
           </div>
-          <Button variant="outline" onClick={() => { setShowCsvForm(true); setShowForm(false); setCsvPreview(null); setCsvFile(null); setCsvError(''); }} className="!rounded-xl border-2">
+          <Button variant="outline" onClick={() => { setShowCsvForm(true); setShowForm(false); setCsvPreview(null); setCsvFile(null); }} className="!rounded-xl border-2">
             <FileUp className="w-4 h-4" /> {t('app.transactions.importCsv')}
           </Button>
           <Button onClick={openAdd} className="!rounded-xl">
@@ -635,8 +639,6 @@ export default function Transactions() {
             </button>
           <h2 className="font-bold text-cc-forest mb-4">{t('app.transactions.importCsvTitle')}</h2>
           
-          {csvError && <div className="text-red-500 text-sm mb-4">{csvError}</div>}
-          
           {!csvPreview ? (
             <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl p-8">
               <UploadCloud className="w-8 h-8 text-cc-muted mb-2" />
@@ -678,13 +680,15 @@ export default function Transactions() {
                             <option value="income">{t('app.transactions.income')}</option>
                           </select>
                         </td>
-                        <td className="px-3 py-2">
-                          <select value={row.categoryId || row.aiSuggestedCategory || ''} onChange={(e) => updateCsvRow(i, 'categoryId', e.target.value)} className="w-full bg-transparent outline-none text-xs border rounded px-1 border-cc-mint text-cc-forest">
-                            <option value="">{t('app.transactions.select')}</option>
-                            {categories.filter(c => c.type === (row.type || 'expense')).map(c => (
-                              <option key={c._id || c.id} value={c._id || c.id}>{c.name}</option>
-                            ))}
-                          </select>
+                        <td className="px-3 py-2 min-w-[160px]">
+                          <CategorySelect
+                            compact
+                            categories={categories.filter((c) => c.type === (row.type || 'expense'))}
+                            value={row.categoryId || row.aiSuggestedCategory || ''}
+                            onChange={(id) => updateCsvRow(i, 'categoryId', id)}
+                            placeholder={t('app.transactions.select')}
+                            language={i18n.language}
+                          />
                         </td>
                       </tr>
                     ))}
@@ -735,22 +739,19 @@ export default function Transactions() {
               </div>
               <div>
                 <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.transactions.category')}</label>
-                <select
+                <CategorySelect
                   required
+                  categories={categories.filter((c) => c.type === templateForm.type)}
                   value={templateForm.category}
-                  onChange={(e) => setTemplateForm({ ...templateForm, category: e.target.value })}
-                  className="mt-1 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-cc-lime"
-                >
-                  <option value="">{t('app.transactions.select')}</option>
-                  {categories.filter(c => c.type === templateForm.type).map((c) => (
-                    <option key={c._id || c.id} value={c._id || c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(id) => setTemplateForm({ ...templateForm, category: id })}
+                  placeholder={t('app.transactions.select')}
+                  language={i18n.language}
+                />
               </div>
               <div>
-                <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.transactions.amount')} ({profile?.currency || 'USD'})</label>
+                <label className="text-xs font-semibold text-cc-muted uppercase">
+                  {t('app.transactions.amount')} ({profile?.currency || 'PKR'})
+                </label>
                 <input
                   type="number"
                   step="0.01"
@@ -790,7 +791,9 @@ export default function Transactions() {
               </select>
             </div>
             <div>
-              <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.transactions.amountPkr')}</label>
+              <label className="text-xs font-semibold text-cc-muted uppercase">
+                {t('app.transactions.amount')} ({profile?.currency || 'PKR'})
+              </label>
               <input
                 type="number"
                 step="0.01"
@@ -823,19 +826,14 @@ export default function Transactions() {
             </div>
             <div>
               <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.transactions.category')}</label>
-              <select
+              <CategorySelect
                 required
+                categories={typeCats}
                 value={form.categoryId}
-                onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
-                className="mt-1 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-cc-lime"
-              >
-                <option value="">{t('app.transactions.select')}</option>
-                {typeCats.map((c) => (
-                  <option key={c._id || c.id} value={c._id || c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(id) => setForm({ ...form, categoryId: id })}
+                placeholder={t('app.transactions.select')}
+                language={i18n.language}
+              />
             </div>
             <div>
               <label className="text-xs font-semibold text-cc-muted uppercase">{t('app.transactions.date')}</label>

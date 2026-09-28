@@ -3,7 +3,7 @@ import { Plus, Pencil, Trash2, X, Loader2 } from 'lucide-react';
 import api from '../../api';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../../components/Button';
-import { CategoryIcon, iconMap } from '../../utils/categoryIcons';
+import { CategoryIcon, iconMap, PRESET_COLORS } from '../../utils/categoryIcons';
 
 export default function AdminCategories() {
   const { showToast } = useApp();
@@ -118,14 +118,42 @@ export default function AdminCategories() {
             </select>
           </div>
           <div>
-            <label className="text-xs font-semibold text-cc-muted uppercase">Icon Key</label>
-            <select
-              value={form.icon}
-              onChange={(e) => setForm({ ...form, icon: e.target.value })}
-              className="mt-1 w-full px-3 py-2.5 rounded-xl border text-sm"
-            >
-              {Object.keys(iconMap).map(k => <option key={k} value={k}>{k}</option>)}
-            </select>
+            <label className="text-xs font-semibold text-cc-muted uppercase">Icon</label>
+            <div className="mt-1 flex items-center gap-2">
+              <CategoryIcon iconKey={form.icon} color={form.color} className="w-4 h-4" size={36} />
+              <select
+                value={form.icon}
+                onChange={(e) => setForm({ ...form, icon: e.target.value })}
+                className="w-full px-3 py-2.5 rounded-xl border text-sm"
+              >
+                {Object.keys(iconMap).map((k) => (
+                  <option key={k} value={k}>{k}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-cc-muted uppercase">Color</label>
+            <div className="mt-1 flex items-center gap-1.5 h-[42px]">
+              {PRESET_COLORS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setForm({ ...form, color: c })}
+                  className={`w-6 h-6 rounded-full border-2 ${form.color === c ? 'border-gray-800 scale-110' : 'border-transparent'}`}
+                  style={{ backgroundColor: c }}
+                />
+              ))}
+              <div className="relative w-6 h-6 rounded-full overflow-hidden border border-gray-200 ml-1">
+                <input
+                  type="color"
+                  value={form.color}
+                  onChange={(e) => setForm({ ...form, color: e.target.value })}
+                  className="absolute -top-2 -left-2 w-10 h-10 cursor-pointer"
+                  title="Custom color"
+                />
+              </div>
+            </div>
           </div>
           <Button type="submit" disabled={saving} className="!rounded-xl h-[42px] px-6">
             {saving ? 'Saving...' : 'Save'}

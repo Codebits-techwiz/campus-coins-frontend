@@ -41,7 +41,7 @@ export const PRESET_COLORS = [
   '#6366f1'  // indigo
 ];
 
-export const CategoryIcon = ({ iconKey, color, className = "w-4 h-4" }) => {
+export const CategoryIcon = ({ iconKey, color, className = "w-4 h-4", size = 36 }) => {
   const IconComponent = iconMap[iconKey] || Tag;
   const safeColor = color || '#6B7280';
   
@@ -51,8 +51,8 @@ export const CategoryIcon = ({ iconKey, color, className = "w-4 h-4" }) => {
       style={{ 
         backgroundColor: `${safeColor}20`, 
         color: safeColor,
-        width: '36px',
-        height: '36px'
+        width: size,
+        height: size
       }}
     >
       <IconComponent className={className} strokeWidth={2.5} />

@@ -4,12 +4,12 @@ import { translateDynamicText } from '../../utils/translateDynamicText';
 import { Pin, X, Bot, Bookmark, Loader2, Info, History } from 'lucide-react';
 import api from '../../api';
 import { useApp } from '../../context/AppContext';
-import { formatMoney } from '../../utils/formatMoney';
+import { formatMoney, toYearMonthLocal } from '../../utils/formatMoney';
 import { getTipImpact } from '../../utils/tipImpact';
 
 function formatInsightMonth(monthVal) {
   if (!monthVal) return '';
-  const str = typeof monthVal === 'string' ? monthVal.slice(0, 7) : new Date(monthVal).toISOString().slice(0, 7);
+  const str = typeof monthVal === 'string' ? monthVal.slice(0, 7) : toYearMonthLocal(monthVal);
   const [y, m] = str.split('-');
   const d = new Date(Number(y), Number(m) - 1, 1);
   return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
@@ -51,7 +51,7 @@ export default function Insights() {
         const m = res.data.data?.month
           ? (typeof res.data.data.month === 'string'
               ? res.data.data.month.slice(0, 7)
-              : new Date(res.data.data.month).toISOString().slice(0, 7))
+              : toYearMonthLocal(new Date(res.data.data.month)))
           : month || '';
         if (m) setSelectedMonth(m);
         await refreshHistory();
@@ -216,7 +216,7 @@ export default function Insights() {
               {history.map((h) => {
                 const m = typeof h.month === 'string'
                   ? h.month.slice(0, 7)
-                  : new Date(h.month).toISOString().slice(0, 7);
+                  : toYearMonthLocal(new Date(h.month));
                 return (
                   <option key={h._id || m} value={m}>
                     {formatInsightMonth(m)}
@@ -284,7 +284,7 @@ export default function Insights() {
             {history.map((h) => {
               const m = typeof h.month === 'string'
                 ? h.month.slice(0, 7)
-                : new Date(h.month).toISOString().slice(0, 7);
+                : toYearMonthLocal(new Date(h.month));
               const active = selectedMonth === m;
               return (
                 <button

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import api from '../../api';
+import { ErrorBox } from '../../components/ErrorBox';
 
 const COLORS = ['#5CB85C', '#0B3D2E', '#F5C518', '#3D9B3D', '#95cea4', '#145A43'];
 
@@ -22,7 +23,13 @@ export default function AdminStats() {
   }, []);
 
   if (loading) return <div className="text-center py-10 text-cc-muted">Loading stats...</div>;
-  if (!stats) return <div className="text-center py-10 text-red-500">Failed to load stats.</div>;
+  if (!stats) {
+    return (
+      <div className="max-w-lg mx-auto py-10 px-4">
+        <ErrorBox message="We couldn’t load the stats right now. Please refresh the page." />
+      </div>
+    );
+  }
 
   const pieData = stats.topCategories?.map(c => ({ name: c.name, value: c.count })) || [];
   const weeklyActive = stats.weeklyActiveUsers?.length

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Upload, Save, Moon, Sun, Type, KeyRound, Lock, Camera, ShieldCheck } from 'lucide-react';
@@ -17,6 +17,17 @@ export default function Profile() {
     monthlySavingsGoal: profile?.monthlySavingsGoal || 0,
     currency: profile?.currency || 'PKR'
   });
+
+  useEffect(() => {
+    if (!profile) return;
+    setForm((prev) => ({
+      ...prev,
+      ...profile,
+      monthlyAllowanceBaseline: profile.monthlyAllowanceBaseline ?? prev.monthlyAllowanceBaseline ?? 0,
+      monthlySavingsGoal: profile.monthlySavingsGoal ?? prev.monthlySavingsGoal ?? 0,
+      currency: profile.currency || prev.currency || 'PKR',
+    }));
+  }, [profile]);
   const avatarRef = useRef(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [toggling2FA, setToggling2FA] = useState(false);

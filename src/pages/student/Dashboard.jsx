@@ -11,8 +11,9 @@ import {
   ArrowRight,
   Lightbulb,
   X,
-  Megaphone,
   Bookmark,
+  Banknote,
+  PiggyBank,
 } from 'lucide-react';
 import {
   PieChart,
@@ -46,13 +47,22 @@ const getCatName = (t) => {
 
 export default function Dashboard() {
   const { t, i18n } = useTranslation();
-  const { profile, balance, monthIncome, monthExpense, transactions, announcements, dashboardSummary, showToast } = useApp();
+  const { profile, balance, monthIncome, monthExpense, transactions, dashboardSummary, showToast } = useApp();
 
-  const income  = dashboardSummary?.currentMonth?.income  ?? dashboardSummary?.totals?.income ?? monthIncome;
-  const expense = dashboardSummary?.currentMonth?.expenses ?? dashboardSummary?.totals?.expense ?? monthExpense;
-  const bal     = dashboardSummary?.currentMonth?.balance  ?? dashboardSummary?.totals?.balance ?? balance;
+  // Live monthly totals from transactions — always up to date after add/edit/delete
+  const income = monthIncome;
+  const expense = monthExpense;
+  const bal = balance;
+  const allowance =
+    profile?.monthlyAllowanceBaseline ??
+    dashboardSummary?.user?.monthlyAllowanceBaseline ??
+    0;
+  const savingsGoal =
+    profile?.monthlySavingsGoal ??
+    dashboardSummary?.user?.monthlySavingsGoal ??
+    0;
 
-  const recentTx = dashboardSummary?.recentTransactions ?? transactions.slice(0, 5);
+  const recentTx = transactions.slice(0, 5);
 
   const [activities, setActivities] = useState([]);
   const [trend6Months, setTrend6Months] = useState([]);
@@ -76,7 +86,8 @@ export default function Dashboard() {
       })
       .catch(console.error);
 
-    const currentMonth = new Date().toISOString().slice(0, 7);
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     api.get(`/api/reports/trend-6months?month=${currentMonth}`)
       .then(res => {
         if (res.data.success) {
@@ -97,12 +108,18 @@ export default function Dashboard() {
         }
       })
       .catch(console.error);
-  }, []);
+  }, [transactions.length]);
 
-  const currentMonth = new Date().toISOString().slice(0, 7);
+  const nowLocal = new Date();
+  const currentMonth = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}`;
   const expenseByCat = {};
   transactions
-    .filter((t) => t.type === 'expense' && t.date?.startsWith(currentMonth))
+    .filter((t) => {
+      if (t.type !== 'expense' || !t.date) return false;
+      const d = new Date(t.date);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      return key === currentMonth;
+    })
     .forEach((t) => {
       const name = getCatName(t);
       expenseByCat[name] = (expenseByCat[name] || 0) + (t.amount || 0);
@@ -182,28 +199,52 @@ export default function Dashboard() {
 
 
 
-      <div className="grid sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-cc-muted uppercase">{t('app.dashboard.balance')}</span>
-            <Wallet className="w-4 h-4 text-cc-lime" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 shadow-sm min-w-0 overflow-hidden">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <span className="text-xs font-bold text-cc-muted uppercase truncate">{t('app.dashboard.balance')}</span>
+            <Wallet className="w-4 h-4 text-cc-lime shrink-0" />
           </div>
-          <p className="text-3xl font-extrabold text-cc-forest">{formatMoney(bal, profile?.currency)}</p>
+          <p className="text-xl sm:text-2xl font-extrabold text-cc-forest tabular-nums break-words leading-tight">
+            {formatMoney(bal, profile?.currency)}
+          </p>
           <p className="text-xs text-cc-muted mt-1">{t('app.dashboard.balanceFormula')}</p>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-cc-muted uppercase">{t('app.dashboard.income')}</span>
-            <TrendingUp className="w-4 h-4 text-cc-lime" />
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 shadow-sm min-w-0 overflow-hidden">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <span className="text-xs font-bold text-cc-muted uppercase truncate">{t('app.dashboard.income')}</span>
+            <TrendingUp className="w-4 h-4 text-cc-lime shrink-0" />
           </div>
-          <p className="text-3xl font-extrabold text-cc-lime">{formatMoney(income, profile?.currency)}</p>
+          <p className="text-xl sm:text-2xl font-extrabold text-cc-lime tabular-nums break-words leading-tight">
+            {formatMoney(income, profile?.currency)}
+          </p>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-cc-muted uppercase">{t('app.dashboard.expenses')}</span>
-            <TrendingDown className="w-4 h-4 text-red-500" />
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 shadow-sm min-w-0 overflow-hidden">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <span className="text-xs font-bold text-cc-muted uppercase truncate">{t('app.dashboard.expenses')}</span>
+            <TrendingDown className="w-4 h-4 text-red-500 shrink-0" />
           </div>
-          <p className="text-3xl font-extrabold text-cc-ink">{formatMoney(expense, profile?.currency)}</p>
+          <p className="text-xl sm:text-2xl font-extrabold text-cc-ink tabular-nums break-words leading-tight">
+            {formatMoney(expense, profile?.currency)}
+          </p>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 shadow-sm min-w-0 overflow-hidden">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <span className="text-xs font-bold text-cc-muted uppercase truncate">{t('app.dashboard.allowance')}</span>
+            <Banknote className="w-4 h-4 text-cc-lime shrink-0" />
+          </div>
+          <p className="text-xl sm:text-2xl font-extrabold text-cc-forest tabular-nums break-words leading-tight">
+            {formatMoney(allowance, profile?.currency)}
+          </p>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 shadow-sm min-w-0 overflow-hidden">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <span className="text-xs font-bold text-cc-muted uppercase truncate">{t('app.dashboard.savingsGoal')}</span>
+            <PiggyBank className="w-4 h-4 text-cc-lime shrink-0" />
+          </div>
+          <p className="text-xl sm:text-2xl font-extrabold text-cc-forest tabular-nums break-words leading-tight">
+            {formatMoney(savingsGoal, profile?.currency)}
+          </p>
         </div>
       </div>
 
@@ -384,7 +425,13 @@ export default function Dashboard() {
                       </td>
                       <td className="py-2.5 font-medium text-cc-ink">{tItem.description}</td>
                       <td className="py-2.5">
-                        <span className="text-xs bg-cc-mint text-cc-forest px-2 py-0.5 rounded-full font-medium">
+                        <span className="inline-flex items-center gap-1.5 text-xs bg-cc-mint text-cc-forest px-2 py-0.5 rounded-full font-medium">
+                          <CategoryIcon
+                            iconKey={tItem.category?.icon}
+                            color={tItem.category?.color}
+                            className="w-3 h-3"
+                            size={20}
+                          />
                           {getCatName(tItem)}
                         </span>
                       </td>

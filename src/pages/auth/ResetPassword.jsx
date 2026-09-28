@@ -4,8 +4,11 @@ import { Lock, ArrowLeft, Key, Mail, KeyRound } from 'lucide-react';
 import api from '../../api';
 import { Button } from '../../components/Button';
 import { Logo } from '../../components/Logo';
+import { getFriendlyError } from '../../utils/friendlyError';
+import { useApp } from '../../context/AppContext';
 
 export default function ResetPassword() {
+  const { showToast } = useApp();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [email, setEmail] = useState(searchParams.get('email') || '');
@@ -13,30 +16,28 @@ export default function ResetPassword() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email) {
-      setError('Please enter your email address.');
+      showToast('Please enter your email address.', 'error');
       return;
     }
     if (!otp || otp.trim().length !== 6) {
-      setError('Please enter a 6-digit OTP code.');
+      showToast('Please enter a 6-digit OTP code.', 'error');
       return;
     }
     if (password !== confirmPassword) {
-      setError('Passwords do not match.');
+      showToast('Passwords do not match.', 'error');
       return;
     }
     if (!password || password.length < 6) {
-      setError('Password must be at least 6 characters.');
+      showToast('Password must be at least 6 characters.', 'error');
       return;
     }
     
     setLoading(true);
-    setError('');
     
     try {
       const res = await api.post('/api/auth/reset-password', {
@@ -51,7 +52,7 @@ export default function ResetPassword() {
         }, 2500);
       }
     } catch (err) {
-      setError(err.response?.data?.error || err.response?.data?.message || 'Invalid or expired OTP code.');
+      showToast(getFriendlyError(err, 'That code is wrong or has expired. Please request a new one.'), 'error');
     } finally {
       setLoading(false);
     }
@@ -89,12 +90,6 @@ export default function ResetPassword() {
             </div>
           ) : (
             <form className="space-y-4" onSubmit={handleSubmit}>
-              {error && (
-                <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-sm font-medium border border-red-100 flex items-start gap-2">
-                  <div className="shrink-0 mt-0.5">⚠️</div>
-                  {error}
-                </div>
-              )}
 
               <div>
                 <label className="block text-sm font-semibold text-cc-forest mb-1.5">Email Address</label>

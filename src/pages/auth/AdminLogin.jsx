@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Logo } from '../../components/Logo';
 import { Button } from '../../components/Button';
 import { useApp } from '../../context/AppContext';
+import { getFriendlyError } from '../../utils/friendlyError';
 import api from '../../api';
 
 export default function AdminLogin() {
@@ -15,12 +16,10 @@ export default function AdminLogin() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
 
     try {
       const res = await api.post('/api/auth/admin-login', { email, password });
@@ -35,7 +34,7 @@ export default function AdminLogin() {
         }
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Admin login failed');
+      showToast(getFriendlyError(err, 'We couldn’t log you in. Please check your details and try again.'), 'error');
     } finally {
       setLoading(false);
     }
@@ -52,11 +51,6 @@ export default function AdminLogin() {
           <h1 className="text-xl font-extrabold text-cc-forest">{t('auth.adminTitle')}</h1>
           <p className="text-sm text-cc-muted mt-1">{t('auth.adminSub')}</p>
         </div>
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm text-center">
-            {error}
-          </div>
-        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-xs font-semibold text-cc-muted uppercase">{t('auth.email')}</label>

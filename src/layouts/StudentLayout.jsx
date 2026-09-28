@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -49,8 +49,16 @@ export function StudentLayout() {
 
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { profile, setProfile, setRole, darkMode, setDarkMode, fontSize, setFontSize, announcements } = useApp();
+  const { profile, setProfile, setRole, darkMode, setDarkMode, fontSize, setFontSize, announcements, refreshAllAppData } = useApp();
   const location = useLocation();
+
+  // Soft refresh live data whenever user switches tabs
+  useEffect(() => {
+    if (typeof refreshAllAppData === 'function') {
+      refreshAllAppData();
+    }
+  }, [location.pathname, refreshAllAppData]);
+
   const pathnames = location.pathname.split('/').filter((x) => x);
   const breadcrumbLabels = {
     app: t('studentNav.studentPortal'),

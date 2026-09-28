@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Logo } from '../../components/Logo';
 import { Button } from '../../components/Button';
 import { useApp } from '../../context/AppContext';
+import { getFriendlyError } from '../../utils/friendlyError';
 import api from '../../api';
 
 export default function Login() {
@@ -19,7 +20,6 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
-  const [error, setError] = useState('');
 
   const finishLogin = async (message) => {
     const profileRes = await api.get('/api/users/profile');
@@ -34,7 +34,6 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
 
     try {
       const res = await api.post('/api/auth/login', { email, password });
@@ -50,7 +49,7 @@ export default function Login() {
         }
       }
     } catch (err) {
-      setError(err.response?.data?.error || t('auth.loginFailed'));
+      showToast(getFriendlyError(err, t('auth.loginFailed')), 'error');
     } finally {
       setLoading(false);
     }
@@ -59,11 +58,10 @@ export default function Login() {
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
     if (!otp || otp.trim().length !== 6) {
-      setError(t('auth.otpInvalid'));
+      showToast(t('auth.otpInvalid'), 'error');
       return;
     }
     setLoading(true);
-    setError('');
     try {
       const res = await api.post('/api/auth/verify-login-otp', {
         email: email.trim(),
@@ -74,7 +72,7 @@ export default function Login() {
         await finishLogin(res.data.message);
       }
     } catch (err) {
-      setError(err.response?.data?.error || t('auth.otpFailed'));
+      showToast(getFriendlyError(err, t('auth.otpFailed')), 'error');
     } finally {
       setLoading(false);
     }
@@ -82,7 +80,6 @@ export default function Login() {
 
   const handleResendOtp = async () => {
     setResending(true);
-    setError('');
     try {
       const res = await api.post('/api/auth/resend-login-otp', {
         email: email.trim(),
@@ -93,7 +90,7 @@ export default function Login() {
         showToast(t('auth.otpResent'), 'success');
       }
     } catch (err) {
-      setError(err.response?.data?.error || t('auth.otpResendFailed'));
+      showToast(getFriendlyError(err, t('auth.otpResendFailed')), 'error');
     } finally {
       setResending(false);
     }
@@ -111,11 +108,6 @@ export default function Login() {
             {step === 'otp' ? t('auth.otpSub', { email }) : t('auth.loginSub')}
           </p>
         </div>
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm text-center">
-            {error}
-          </div>
-        )}
 
         {step === 'credentials' ? (
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -128,7 +120,8 @@ export default function Login() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-cc-lime focus:ring-2 focus:ring-cc-lime/20 outline-none text-sm"
+                  placeholder="you@campus.edu"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-cc-lime outline-none text-sm"
                 />
               </div>
             </div>
@@ -141,13 +134,12 @@ export default function Login() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-11 py-3 rounded-xl border border-gray-200 focus:border-cc-lime focus:ring-2 focus:ring-cc-lime/20 outline-none text-sm"
+                  className="w-full pl-10 pr-11 py-3 rounded-xl border border-gray-200 focus:border-cc-lime outline-none text-sm"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-cc-muted hover:text-cc-forest transition"
-                  aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-cc-muted hover:text-cc-forest"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -159,7 +151,7 @@ export default function Login() {
               </Link>
             </div>
             <Button type="submit" disabled={loading} className="w-full !rounded-xl !py-3">
-              {loading ? t('auth.signingIn') : <><span className="mr-2">{t('auth.signIn')}</span> <ArrowRight className="w-4 h-4" /></>}
+              {loading ? t('auth.signingIn') : t('auth.signIn')} <ArrowRight className="w-4 h-4" />
             </Button>
           </form>
         ) : (
@@ -171,53 +163,46 @@ export default function Login() {
                 <input
                   type="text"
                   inputMode="numeric"
-                  pattern="[0-9]*"
                   maxLength={6}
                   required
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  placeholder="000000"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-cc-lime focus:ring-2 focus:ring-cc-lime/20 outline-none text-sm tracking-[0.35em] font-bold text-center"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-cc-lime outline-none text-sm tracking-[0.3em] font-semibold"
+                  placeholder="••••••"
                 />
               </div>
             </div>
             <Button type="submit" disabled={loading} className="w-full !rounded-xl !py-3">
-              {loading ? t('auth.verifying') : t('auth.verifyOtp')}
+              {loading ? t('auth.verifying') : t('auth.verifyOtp')} <ArrowRight className="w-4 h-4" />
             </Button>
-            <div className="flex items-center justify-between text-xs">
-              <button
-                type="button"
-                onClick={() => {
-                  setStep('credentials');
-                  setOtp('');
-                  setPendingToken('');
-                  setError('');
-                }}
-                className="font-semibold text-cc-muted hover:text-cc-forest"
-              >
-                {t('auth.backToLogin')}
-              </button>
-              <button
-                type="button"
-                disabled={resending}
-                onClick={handleResendOtp}
-                className="inline-flex items-center gap-1 font-semibold text-cc-lime hover:underline disabled:opacity-50"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${resending ? 'animate-spin' : ''}`} />
-                {resending ? t('auth.resending') : t('auth.resendOtp')}
-              </button>
-            </div>
+            <button
+              type="button"
+              disabled={resending}
+              onClick={handleResendOtp}
+              className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-cc-forest hover:text-cc-lime"
+            >
+              <RefreshCw className={`w-4 h-4 ${resending ? 'animate-spin' : ''}`} />
+              {resending ? t('auth.resending') : t('auth.resendOtp')}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setStep('credentials');
+                setOtp('');
+              }}
+              className="w-full text-xs text-cc-muted hover:text-cc-forest"
+            >
+              {t('auth.backToLogin')}
+            </button>
           </form>
         )}
 
-        {step === 'credentials' && (
-          <p className="text-center text-sm text-cc-muted mt-6">
-            {t('auth.noAccount')}{' '}
-            <Link to="/register" className="font-semibold text-cc-forest hover:text-cc-lime">
-              {t('nav.signUp')}
-            </Link>
-          </p>
-        )}
+        <p className="text-center text-sm text-cc-muted mt-6">
+          {t('auth.noAccount')}{' '}
+          <Link to="/register" className="font-semibold text-cc-lime hover:underline">
+            {t('nav.signUp')}
+          </Link>
+        </p>
       </div>
     </div>
   );
